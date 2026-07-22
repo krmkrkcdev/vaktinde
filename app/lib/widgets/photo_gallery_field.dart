@@ -111,10 +111,8 @@ class PhotoGalleryField extends StatelessWidget {
   Future<void> _open(BuildContext context, int index) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _PhotoViewer(
-          photoNames: photoNames,
-          initialIndex: index,
-        ),
+        builder: (_) =>
+            _PhotoViewer(photoNames: photoNames, initialIndex: index),
       ),
     );
   }
@@ -187,18 +185,29 @@ class _Thumbnail extends StatelessWidget {
               ),
             ),
           ),
+          // Dokunma hedefi 44×44 (HIG alt sınırı); görünür rozet küçük kalır
+          // ama basılabilir alan karonun köşesini tümüyle kaplar.
           Positioned(
-            top: 2,
-            right: 2,
-            child: Material(
-              color: scheme.surface.withValues(alpha: 0.85),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: onRemove,
-                child: Padding(
-                  padding: const EdgeInsets.all(5),
-                  child: Icon(Icons.close, size: 17, color: scheme.error),
+            top: 0,
+            right: 0,
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: onRemove,
+                  child: Center(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: scheme.surface.withValues(alpha: 0.85),
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(5),
+                      child: Icon(Icons.close, size: 17, color: scheme.error),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -255,8 +264,9 @@ class _PhotoViewer extends StatefulWidget {
 }
 
 class _PhotoViewerState extends State<_PhotoViewer> {
-  late final PageController _controller =
-      PageController(initialPage: widget.initialIndex);
+  late final PageController _controller = PageController(
+    initialPage: widget.initialIndex,
+  );
   late int _index = widget.initialIndex;
 
   @override

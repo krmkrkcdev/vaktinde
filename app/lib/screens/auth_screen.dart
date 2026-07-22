@@ -66,13 +66,16 @@ class _AuthScreenState extends State<AuthScreen> {
     final busy = context.watch<AuthStore>().isBusy;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isRegister ? 'Hesap oluştur' : 'Giriş yap'),
-      ),
+      appBar: AppBar(title: Text(_isRegister ? 'Hesap oluştur' : 'Giriş yap')),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            24 + MediaQuery.of(context).padding.bottom,
+          ),
           children: [
             Icon(Icons.cloud_outlined, size: 56, color: scheme.primary),
             const SizedBox(height: 16),
@@ -121,7 +124,9 @@ class _AuthScreenState extends State<AuthScreen> {
               controller: _passwordController,
               obscureText: _obscure,
               autofillHints: [
-                _isRegister ? AutofillHints.newPassword : AutofillHints.password,
+                _isRegister
+                    ? AutofillHints.newPassword
+                    : AutofillHints.password,
               ],
               style: const TextStyle(fontSize: 18),
               decoration: InputDecoration(
@@ -130,7 +135,9 @@ class _AuthScreenState extends State<AuthScreen> {
                 suffixIcon: IconButton(
                   tooltip: _obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
                   icon: Icon(
-                    _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    _obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                   ),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
@@ -172,7 +179,10 @@ class _AuthScreenState extends State<AuthScreen> {
               onPressed: busy ? null : _submit,
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(58),
-                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               child: busy
                   ? const SizedBox(
@@ -187,9 +197,9 @@ class _AuthScreenState extends State<AuthScreen> {
               onPressed: busy
                   ? null
                   : () => setState(() {
-                        _isRegister = !_isRegister;
-                        _error = null;
-                      }),
+                      _isRegister = !_isRegister;
+                      _error = null;
+                    }),
               child: Text(
                 _isRegister
                     ? 'Zaten hesabım var, giriş yap'

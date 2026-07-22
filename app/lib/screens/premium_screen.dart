@@ -13,14 +13,22 @@ class PremiumScreen extends StatelessWidget {
   const PremiumScreen({super.key});
 
   static const _benefits = [
-    (Icons.all_inclusive, 'Sınırsız hatırlatma',
-        'Ücretsiz sürümdeki 10 kayıt sınırı kalkar.'),
-    (Icons.cloud_upload_outlined, 'Bulut yedekleme',
-        'Telefonunuzu değiştirseniz de kayıtlarınız sizinle gelir.'),
-    (Icons.family_restroom_outlined, 'Aileyle paylaşma',
-        'Kira, aidat, muayene gibi ortak tarihleri birlikte takip edin.'),
-    (Icons.block_outlined, 'Reklamsız kullanım',
-        'Hiçbir reklam gösterilmez.'),
+    (
+      Icons.all_inclusive,
+      'Sınırsız hatırlatma',
+      'Ücretsiz sürümdeki 10 kayıt sınırı kalkar.',
+    ),
+    (
+      Icons.cloud_upload_outlined,
+      'Bulut yedekleme',
+      'Telefonunuzu değiştirseniz de kayıtlarınız sizinle gelir.',
+    ),
+    (
+      Icons.family_restroom_outlined,
+      'Aileyle paylaşma',
+      'Kira, aidat, muayene gibi ortak tarihleri birlikte takip edin.',
+    ),
+    (Icons.block_outlined, 'Reklamsız kullanım', 'Hiçbir reklam gösterilmez.'),
   ];
 
   @override
@@ -31,7 +39,12 @@ class PremiumScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Premium')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          8,
+          20,
+          32 + MediaQuery.of(context).padding.bottom,
+        ),
         children: [
           Container(
             width: 72,

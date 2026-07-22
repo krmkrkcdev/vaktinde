@@ -25,23 +25,30 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Ayarlar')),
       body: ListView(
+        // Son öğe ve açıklama metni ana ekran çubuğunun altında kalmasın.
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
         children: [
           const _AccountSection(),
           const Divider(height: 1),
 
           ListTile(
-            leading: Icon(Icons.workspace_premium_outlined, color: scheme.primary),
-            title: Text(settings.isPremium ? 'Premium etkin' : 'Premium\'a geç'),
+            leading: Icon(
+              Icons.workspace_premium_outlined,
+              color: scheme.primary,
+            ),
+            title: Text(
+              settings.isPremium ? 'Premium etkin' : 'Premium\'a geç',
+            ),
             subtitle: Text(
               settings.isPremium
                   ? 'Sınırsız hatırlatma açık'
                   : '${store.activeCount}/${SettingsStore.freeReminderLimit} '
-                      'hatırlatma kullanıldı',
+                        'hatırlatma kullanıldı',
             ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const PremiumScreen()),
-            ),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const PremiumScreen())),
           ),
           const Divider(height: 1),
 
@@ -83,9 +90,9 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Arşiv'),
             subtitle: Text('${store.archived.length} tamamlanmış hatırlatma'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ArchiveScreen()),
-            ),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ArchiveScreen())),
           ),
           const Divider(height: 1),
 
@@ -105,10 +112,10 @@ class SettingsScreen extends StatelessWidget {
             child: Text(
               context.watch<AuthStore>().isSignedIn
                   ? 'Hatırlatmalarınız ve belge fotoğraflarınız telefonunuzda '
-                      'saklanır ve hesabınıza yedeklenir. Çıkış yaparsanız '
-                      'yedekleme durur, kayıtlarınız telefonda kalır.'
+                        'saklanır ve hesabınıza yedeklenir. Çıkış yaparsanız '
+                        'yedekleme durur, kayıtlarınız telefonda kalır.'
                   : 'Verileriniz yalnızca bu telefonda saklanır. Giriş '
-                      'yapmadığınız sürece sunucuya hiçbir bilgi gönderilmez.',
+                        'yapmadığınız sürece sunucuya hiçbir bilgi gönderilmez.',
               style: const TextStyle(fontSize: 12.5, height: 1.4),
             ),
           ),
@@ -196,9 +203,9 @@ class _AccountSection extends StatelessWidget {
           'Giriş yapın; telefon değiştirdiğinizde kayıtlarınız geri gelsin',
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const AuthScreen()),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const AuthScreen())),
       );
     }
 
@@ -254,7 +261,8 @@ class _AccountSection extends StatelessWidget {
         content: Text(switch (result) {
           SyncState.idle => 'Yedekleme tamamlandı.',
           SyncState.offline => 'İnternet bağlantısı yok.',
-          SyncState.failed => 'Yedekleme başarısız oldu, sonra tekrar denenecek.',
+          SyncState.failed =>
+            'Yedekleme başarısız oldu, sonra tekrar denenecek.',
           SyncState.running => 'Yedekleme sürüyor…',
         }),
       ),

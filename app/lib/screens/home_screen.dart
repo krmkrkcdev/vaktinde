@@ -25,9 +25,9 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             tooltip: 'Ayarlar',
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
           ),
         ],
       ),
@@ -43,13 +43,16 @@ class HomeScreen extends StatelessWidget {
   }
 
   /// Yeni kayıt adım adım sihirbazla, düzenleme tek sayfalık formla açılır.
-  static Future<void> _openForm(BuildContext context, [Reminder? existing]) async {
+  static Future<void> _openForm(
+    BuildContext context, [
+    Reminder? existing,
+  ]) async {
     final store = context.read<ReminderStore>();
 
     if (existing == null && !store.canAddReminder) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PremiumScreen()),
-      );
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const PremiumScreen()));
       return;
     }
 
@@ -76,7 +79,14 @@ class _Body extends StatelessWidget {
     final groups = _groupByUrgency(reminders);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+      // Alt boşluk: genişletilmiş FAB (~72) + güvenli alan; son kart FAB'ın
+      // ya da ana ekran çubuğunun altında kalmasın.
+      padding: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        88 + MediaQuery.of(context).padding.bottom,
+      ),
       children: [
         const _QuotaBanner(),
         const SizedBox(height: 12),
@@ -193,9 +203,9 @@ class _QuotaBanner extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PremiumScreen()),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const PremiumScreen())),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
@@ -229,53 +239,58 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                color: scheme.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+    // Küçük ekran ya da büyük yazı tipi ölçeğinde içerik sığmayınca taşma
+    // yerine kaydırılabilsin; normalde dikeyde ortalı kalır.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.notifications_active_outlined,
+                  size: 40,
+                  color: scheme.primary,
+                ),
               ),
-              child: Icon(
-                Icons.notifications_active_outlined,
-                size: 40,
-                color: scheme.primary,
+              const SizedBox(height: 20),
+              const Text(
+                'Hiçbir şeyi kaçırmayın',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Hiçbir şeyi kaçırmayın',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Muayene, sigorta, kira, fatura, aidat, abonelik ve garanti '
-              'tarihlerinizi ekleyin. Tarih yaklaşınca sizi uyaralım.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.5,
-                height: 1.45,
-                color: scheme.onSurfaceVariant,
+              const SizedBox(height: 8),
+              Text(
+                'Muayene, sigorta, kira, fatura, aidat, abonelik ve garanti '
+                'tarihlerinizi ekleyin. Tarih yaklaşınca sizi uyaralım.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  height: 1.45,
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => HomeScreen._openForm(context),
-              icon: const Icon(Icons.add),
-              label: const Text('İlk hatırlatmanı ekle'),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Ücretsiz sürümde ${SettingsStore.freeReminderLimit} hatırlatma',
-              style: TextStyle(fontSize: 12.5, color: scheme.outline),
-            ),
-          ],
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => HomeScreen._openForm(context),
+                icon: const Icon(Icons.add),
+                label: const Text('İlk hatırlatmanı ekle'),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Ücretsiz sürümde ${SettingsStore.freeReminderLimit} hatırlatma',
+                style: TextStyle(fontSize: 12.5, color: scheme.outline),
+              ),
+            ],
+          ),
         ),
       ),
     );
