@@ -1,0 +1,23 @@
+# Metin dosyalarını depoda LF olarak sakla, checkout'ta platforma bırak.
+* text=auto
+
+# Kabuk betikleri her platformda LF olmalı: CRLF ile başlayan bir betik
+# macOS/Linux'ta "$'\r': command not found" gibi anlaşılmaz hatalar verir.
+*.sh        text eol=lf
+Gemfile     text eol=lf
+Fastfile    text eol=lf
+Appfile     text eol=lf
+Matchfile   text eol=lf
+*.gradle    text eol=lf
+gradlew     text eol=lf
+
+# Windows toplu iş dosyaları CRLF kalmalı.
+*.bat       text eol=crlf
+gradlew.bat text eol=crlf
+
+# İkili dosyalara dokunma.
+*.png       binary
+*.jpg       binary
+*.jks       binary
+*.keystore  binary
+*.p8        binary
