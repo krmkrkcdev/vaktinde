@@ -1,0 +1,21 @@
+# Sırlar — asla depoya girmemeli
+.env
+*.pem
+*.key
+*.jks
+*.keystore
+key.properties
+
+# Derleme çıktıları
+build/
+.gradle/
+.dart_tool/
+__pycache__/
+*.pyc
+
+# Editör / işletim sistemi
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

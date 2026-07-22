@@ -1,0 +1,58 @@
+name: vaktinde
+description: "Belge ve ödeme hatırlatıcısı — muayene, sigorta, kira, fatura, aidat, abonelik ve garanti tarihleri."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  connectivity_plus: ^7.3.0
+  flutter:
+    sdk: flutter
+  flutter_local_notifications: ^22.1.0
+  flutter_localizations:
+    sdk: flutter
+  flutter_secure_storage: ^10.3.1
+  flutter_timezone: ^5.1.0
+  http: ^1.6.0
+  image_picker: ^1.2.3
+  intl: ^0.20.2
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  provider: ^6.1.5+1
+  shared_preferences: ^2.5.5
+  sqflite: ^2.4.2+1
+  timezone: ^0.11.1
+  uuid: ^4.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
+
+flutter:
+  uses-material-design: true
+
+# Kaynak görseller assets/icon/ altında; yeniden üretmek için:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: true
+  adaptive_icon_background: "#2F6FED"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  ios: true
+  remove_alpha_ios: true
+
+# Açılış ekranı; yeniden üretmek için:
+#   dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#2F6FED"
+  image: assets/icon/icon_foreground.png
+  android: true
+  ios: true
+  android_12:
+    color: "#2F6FED"
+    image: assets/icon/icon_foreground.png

@@ -1,0 +1,6 @@
+# Sözleşme testleri çalışan bir backend gerektirir; normal `flutter test`
+# çalışmasında atlanırlar (CONTRACT_API_URL tanımlı değilse kendileri
+# atlanır). Etiket burada tanımlı olmazsa test koşucusu uyarı verir.
+tags:
+  contract:
+    skip: false
