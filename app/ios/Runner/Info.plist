@@ -17,7 +17,7 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>vaktinde</string>
+		<string>Vaktinde</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -50,6 +50,12 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UIStatusBarHidden</key>
+		<false/>
+		<!-- Uygulama yalnızca standart HTTPS/TLS kullanır, özel şifreleme
+		     içermez. Bu anahtar olmadan App Store Connect her yüklemede
+		     "ihracat uyumluluğu" sorusunu elle yanıtlamanızı bekler ve
+		     otomatik yayın akışı orada durur. -->
+		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 	</dict>
 </plist>

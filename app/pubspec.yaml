@@ -1,7 +1,11 @@
 name: vaktinde
 description: "Belge ve ödeme hatırlatıcısı — muayene, sigorta, kira, fatura, aidat, abonelik ve garanti tarihleri."
 publish_to: 'none'
-version: 0.1.0
+
+# Biçim: <sürüm adı>+<build numarası>
+# Build numarası deploy.sh tarafından her yayında otomatik artırılır ve hem
+# iOS (CURRENT_PROJECT_VERSION) hem Android (versionCode) için tek kaynaktır.
+version: 1.0.0+1
 
 environment:
   sdk: ^3.10.4

@@ -1,0 +1,21 @@
+# --- Gizli bilgiler (asla commit edilmemeli) ---
+.env
+*.p8
+android/fastlane/play-store-credentials.json
+ios/fastlane/AuthKey_*.p8
+
+# --- Fastlane çıktıları ---
+ios/fastlane/report.xml
+android/fastlane/report.xml
+ios/fastlane/Preview.html
+android/fastlane/Preview.html
+fastlane/README.md
+*.ipa
+*.dSYM.zip
+*.app.dSYM.zip
+
+# --- Build çıktıları ---
+build/
+
+# --- Fastlane'in ürettiği geçici changelog klasörü ---
+android/fastlane/metadata/
