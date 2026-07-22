@@ -5,6 +5,17 @@
 *.jks
 *.keystore
 key.properties
+*.p8
+**/fastlane/AuthKey_*.p8
+**/fastlane/play-store-credentials.json
+
+# Fastlane çıktıları
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/README.md
+**/fastlane/metadata/
+*.ipa
+*.dSYM.zip
 
 # Derleme çıktıları
 build/
