@@ -226,8 +226,9 @@ class ApiClient {
   static String _errorMessage(http.Response response) {
     try {
       final body = jsonDecode(utf8.decode(response.bodyBytes));
-      if (body is Map && body['detail'] is String)
+      if (body is Map && body['detail'] is String) {
         return body['detail'] as String;
+      }
       if (body is Map && body['detail'] is List) {
         // Pydantic doğrulama hatası.
         return 'Girilen bilgiler geçersiz';
