@@ -70,7 +70,9 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
       case 3:
         return _repeat != null;
       case 4:
-        return _leadDays.isNotEmpty;
+        // Sürekli hatırlatmada "kaç gün önce" sorulmaz; adım yalnızca saat
+        // seçimini içerir ve boş bırakılabilir.
+        return (_repeat?.isContinuous ?? false) || _leadDays.isNotEmpty;
       default:
         return true;
     }
@@ -118,7 +120,11 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
-    final leads = _leadDays.toList()..sort((a, b) => b.compareTo(a));
+    // Sürekli hatırlatmada "kaç gün önce" sorulmaz; bildirim aralık bazlı
+    // kurulduğu için değer kullanılmaz ama alan boş bırakılmaz.
+    final leads = (_repeat?.isContinuous ?? false)
+        ? const [0]
+        : (_leadDays.toList()..sort((a, b) => b.compareTo(a)));
     final reminder = Reminder.create(
       categoryId: category.id,
       title: _titleController.text.trim(),
@@ -406,32 +412,69 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
   Widget _leadStep() {
     final defaultTime = context.watch<SettingsStore>().defaultNotifyTime;
     final effectiveTime = _notifyTime ?? defaultTime;
+    final repeat = _repeat ?? RepeatInterval.none;
+
+    // Saat başı tekrarda ne "kaç gün önce" ne de sabit bir saat anlamlıdır:
+    // bildirim aralık bazlı kurulur.
+    if (repeat == RepeatInterval.hourly) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _Question('Saat başı hatırlatılacak'),
+          const _Hint(
+            'Bu hatırlatma her saat tekrar edecek. İlk bildirim kaydettikten '
+            'bir saat sonra gelir ve siz durdurana kadar sürer.',
+          ),
+          const SizedBox(height: 20),
+          _BigTile(
+            icon: Icons.hourglass_bottom_outlined,
+            iconColor: Theme.of(context).colorScheme.primary,
+            label: 'Her saat başı',
+            selected: true,
+            onTap: () {},
+          ),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _Question('Kaç gün önce haber verelim?'),
-        const _Hint(
-          'Birden fazla seçebilirsiniz. Yalnızca seçtiğiniz günlerde bildirim '
-          'gönderilir.',
-        ),
-        const SizedBox(height: 20),
-        for (final option in _leadOptions) ...[
-          _BigTile(
-            icon: _leadDays.contains(option)
-                ? Icons.check_circle
-                : Icons.circle_outlined,
-            iconColor: Theme.of(context).colorScheme.primary,
-            label: option == 0 ? 'Son gün' : '$option gün önce',
-            selected: _leadDays.contains(option),
-            onTap: () => setState(() {
-              if (!_leadDays.remove(option)) _leadDays.add(option);
-            }),
+        if (!repeat.isContinuous) ...[
+          const _Question('Kaç gün önce haber verelim?'),
+          const _Hint(
+            'Birden fazla seçebilirsiniz. Yalnızca seçtiğiniz günlerde bildirim '
+            'gönderilir.',
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
+          for (final option in _leadOptions) ...[
+            _BigTile(
+              icon: _leadDays.contains(option)
+                  ? Icons.check_circle
+                  : Icons.circle_outlined,
+              iconColor: Theme.of(context).colorScheme.primary,
+              label: option == 0 ? 'Son gün' : '$option gün önce',
+              selected: _leadDays.contains(option),
+              onTap: () => setState(() {
+                if (!_leadDays.remove(option)) _leadDays.add(option);
+              }),
+            ),
+            const SizedBox(height: 10),
+          ],
+          const SizedBox(height: 22),
+        ] else ...[
+          _Question(
+            repeat == RepeatInterval.daily
+                ? 'Her gün saat kaçta?'
+                : 'Her hafta saat kaçta?',
+          ),
+          const _Hint(
+            'Bu hatırlatma siz durdurana kadar tekrar edecek.',
+          ),
+          const SizedBox(height: 20),
         ],
-        const SizedBox(height: 22),
-        _FieldLabel('Saat kaçta?', icon: Icons.schedule_outlined),
+        if (!repeat.isContinuous)
+          _FieldLabel('Saat kaçta?', icon: Icons.schedule_outlined),
         _Hint(
           _notifyTime == null
               ? 'Ayarlardaki varsayılan saat kullanılacak. Değiştirmek için '
@@ -750,16 +793,19 @@ class _Summary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          _SummaryRow(
-            label: 'Son tarih',
-            value: DateFormat('d MMMM yyyy', 'tr_TR').format(dueDate),
-          ),
+          if (!repeat.isContinuous)
+            _SummaryRow(
+              label: 'Son tarih',
+              value: DateFormat('d MMMM yyyy', 'tr_TR').format(dueDate),
+            ),
           _SummaryRow(
             label: 'Tekrar',
             value: repeat == RepeatInterval.none ? 'Sadece bir kez' : repeat.label,
           ),
-          _SummaryRow(label: 'Bildirim', value: leadText),
-          _SummaryRow(label: 'Saat', value: notifyTime.format(context)),
+          if (!repeat.isContinuous)
+            _SummaryRow(label: 'Bildirim', value: leadText),
+          if (repeat != RepeatInterval.hourly)
+            _SummaryRow(label: 'Saat', value: notifyTime.format(context)),
         ],
       ),
     );

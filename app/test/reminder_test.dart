@@ -86,6 +86,22 @@ void main() {
       );
     });
 
+    test('sürekli tekrar yalnızca saatlik, günlük ve haftalıktır', () {
+      // Sürekli olanlar işletim sistemine tekrarlayan bildirim olarak kurulur;
+      // son tarihli olanlar "kaç gün önce" mantığıyla tek tek planlanır.
+      final continuous = RepeatInterval.values
+          .where((r) => r.isContinuous)
+          .toSet();
+      expect(continuous, {
+        RepeatInterval.hourly,
+        RepeatInterval.daily,
+        RepeatInterval.weekly,
+      });
+      expect(RepeatInterval.none.isContinuous, isFalse);
+      expect(RepeatInterval.monthly.isContinuous, isFalse);
+      expect(RepeatInterval.yearly.isContinuous, isFalse);
+    });
+
     test('tekrar yoksa tarih değişmez', () {
       final date = DateTime(2026, 3, 3);
       expect(RepeatInterval.none.next(date), date);

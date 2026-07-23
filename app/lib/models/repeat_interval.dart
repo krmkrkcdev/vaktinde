@@ -15,6 +15,24 @@ enum RepeatInterval {
   final String id;
   final String label;
 
+  /// Kendi kendine sürekli tekrarlayan bir hatırlatma mı?
+  ///
+  /// İki farklı kullanım var:
+  ///
+  /// * **Son tarihli** (aylık kira, yıllık sigorta): bir bitiş tarihi vardır,
+  ///   kaç gün önceden uyarılacağı seçilir, kullanıcı "ödendi" dedikçe tarih
+  ///   sonraki döneme taşınır.
+  /// * **Sürekli** (saat başı ilaç, her gün egzersiz): bitiş tarihi yoktur,
+  ///   "kaç gün önce" kavramı anlamsızdır; bildirim işletim sistemine
+  ///   tekrarlayan olarak kurulur ve kullanıcı durdurana kadar sürer.
+  ///
+  /// Bu ayrım hem bildirim planlamasını hem de arayüzde hangi soruların
+  /// sorulacağını belirler.
+  bool get isContinuous =>
+      this == RepeatInterval.hourly ||
+      this == RepeatInterval.daily ||
+      this == RepeatInterval.weekly;
+
   static RepeatInterval fromId(String id) {
     return RepeatInterval.values.firstWhere(
       (r) => r.id == id,

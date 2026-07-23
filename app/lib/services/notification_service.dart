@@ -8,6 +8,7 @@ import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../models/reminder.dart';
+import '../models/repeat_interval.dart' as model;
 
 /// Yerel (cihaz üstü) bildirimleri planlar. Sunucu / push servisi kullanılmaz.
 class NotificationService {
@@ -108,6 +109,15 @@ class NotificationService {
     await cancel(id);
     if (reminder.isArchived) return;
 
+    // Sürekli hatırlatmalar (saat başı ilaç gibi) tek bir tekrarlayan
+    // bildirimle kurulur: son tarih kavramı yoktur ve tek tek slot açmak
+    // hem iOS'un uygulama başına 64 bekleyen bildirim sınırını tüketir hem
+    // de belirli bir noktada biterdi.
+    if (reminder.repeat.isContinuous) {
+      await _scheduleContinuous(reminder, notificationId: _notificationId(id, 0));
+      return;
+    }
+
     final times = reminder.upcomingNotificationTimes();
     for (var slot = 0; slot < times.length && slot < _slotsPerReminder; slot++) {
       await _scheduleOne(
@@ -116,6 +126,67 @@ class NotificationService {
         reminder: reminder,
       );
     }
+  }
+
+  /// Kullanıcı durdurana kadar süren tekrarlayan bildirim.
+  Future<void> _scheduleContinuous(
+    Reminder reminder, {
+    required int notificationId,
+  }) async {
+    // Günlük ve haftalık tekrar seçilen saate sabitlenir; işletim sistemi
+    // eşleşen bileşenleri (saat / haftanın günü + saat) tekrarlar.
+    if (reminder.repeat == model.RepeatInterval.daily ||
+        reminder.repeat == model.RepeatInterval.weekly) {
+      await _plugin.zonedSchedule(
+        id: notificationId,
+        title: '${reminder.category.label}: ${reminder.title}',
+        body: _bodyFor(reminder),
+        scheduledDate: _nextOccurrence(reminder),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: reminder.id?.toString(),
+        matchDateTimeComponents: reminder.repeat == model.RepeatInterval.daily
+            ? DateTimeComponents.time
+            : DateTimeComponents.dayOfWeekAndTime,
+        notificationDetails: _details,
+      );
+      return;
+    }
+
+    // Saat başı: ilk bildirim bir saat sonra gelir, sonra her saat tekrarlar.
+    // periodicallyShow belirli bir başlangıç saati almaz — saat başı tekrarda
+    // önemli olan aralık olduğu için bu kabul edilebilir.
+    await _plugin.periodicallyShow(
+      id: notificationId,
+      title: '${reminder.category.label}: ${reminder.title}',
+      body: _bodyFor(reminder),
+      repeatInterval: RepeatInterval.hourly,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: reminder.id?.toString(),
+      notificationDetails: _details,
+    );
+  }
+
+  /// Seçilen saatin bir sonraki gelişi. Bugünkü saat geçtiyse yarına kayar;
+  /// aksi hâlde işletim sistemi geçmiş bir tarihe kurulmuş bildirimi atar.
+  tz.TZDateTime _nextOccurrence(Reminder reminder) {
+    final now = tz.TZDateTime.now(tz.local);
+    var next = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      reminder.notifyHour,
+      reminder.notifyMinute,
+    );
+    if (!next.isAfter(now)) next = next.add(const Duration(days: 1));
+
+    // Haftalık tekrarda hatırlatmanın kendi gününe hizala.
+    if (reminder.repeat == model.RepeatInterval.weekly) {
+      while (next.weekday != reminder.dueDate.weekday) {
+        next = next.add(const Duration(days: 1));
+      }
+    }
+    return next;
   }
 
   Future<void> _scheduleOne({
@@ -133,24 +204,33 @@ class NotificationService {
       scheduledDate: scheduled,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       payload: reminder.id?.toString(),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: _channelDescription,
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
+      notificationDetails: _details,
     );
   }
 
+  static const _details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+    ),
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    ),
+  );
+
   String _bodyFor(Reminder reminder) {
+    // Sürekli hatırlatmanın son tarihi yoktur; "son gün" demek yanıltıcı olur.
+    // Kullanıcının kendi notu varsa onu göster, yoksa tekrar aralığını.
+    if (reminder.repeat.isContinuous) {
+      final note = reminder.note?.trim();
+      return (note == null || note.isEmpty) ? reminder.repeat.label : note;
+    }
+
     final date = DateFormat('d MMMM yyyy', 'tr_TR').format(reminder.dueDate);
     final days = reminder.daysRemaining;
     final when = days <= 0 ? 'Son gün: $date' : '$date tarihinde ($days gün kaldı)';
