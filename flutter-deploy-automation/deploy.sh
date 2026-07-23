@@ -28,6 +28,9 @@ SKIP_CHECKS=false
 usage() {
   echo "Kullanım: ./deploy.sh [ios|android|all] [beta|release] [bayraklar]"
   echo "Bayraklar: --dry-run --no-bump --skip-clean --skip-checks"
+  echo "           --notes=\"Sürüm notu\"   testçilere gösterilecek metin"
+  echo ""
+  echo "Örnek:  ./deploy.sh ios beta --notes=\"Saat seçimi eklendi\""
 }
 
 # ---------- Argümanları ayrıştır ----------
@@ -38,6 +41,7 @@ for arg in "$@"; do
     --no-bump)     NO_BUMP=true ;;
     --skip-clean)  SKIP_CLEAN=true ;;
     --skip-checks) SKIP_CHECKS=true ;;
+    --notes=*)     RELEASE_NOTES="${arg#*=}" ;;
     -h|--help)     usage; exit 0 ;;
     -*)            echo "❌ Bilinmeyen bayrak: $arg"; usage; exit 1 ;;
     *)             POSITIONAL+=("$arg") ;;
@@ -145,6 +149,22 @@ fi
 # Fastlane'in dry-run modunu görmesi için dışa aktar
 export DEPLOY_DRY_RUN="$DRY_RUN"
 export DEPLOY_LANE="$LANE"
+# --notes ile verilen metin. Boşsa fastlane release_notes.txt dosyasına,
+# o da yoksa varsayılan metne düşer.
+export DEPLOY_RELEASE_NOTES="${RELEASE_NOTES:-}"
+
+# Mağaza hazırlık denetimi. forge kurulu değilse sessizce atlanır — bu betik
+# forge'a bağımlı olmamalı. Engel bulunursa yayın başlamadan durur; amaç tam
+# bir derleme ve yükleme turunu harcamadan önce hatayı görmek.
+if [ "$SKIP_CHECKS" != true ] && command -v forge >/dev/null 2>&1; then
+  echo "🔎 forge doctor çalıştırılıyor..."
+  if ! forge doctor --path .; then
+    echo ""
+    echo "❌ Yayın durduruldu: yukarıdaki engelleri giderin."
+    echo "   Denetimi atlamak için: --skip-checks"
+    exit 1
+  fi
+fi
 
 if [ "$DRY_RUN" = true ]; then
   echo "🧪 DRY-RUN: build alınacak, mağazaya yükleme YAPILMAYACAK."

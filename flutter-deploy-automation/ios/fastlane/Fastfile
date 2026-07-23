@@ -97,10 +97,17 @@ platform :ios do
     build_app(options)
   end
 
-  desc "Sürüm notlarını fastlane/release_notes.txt dosyasından oku (yoksa varsayılan metin)"
+  desc "Sürüm notu: --notes bayrağı > release_notes.txt > varsayılan metin"
   private_lane :release_notes do
-    path = File.join(Dir.pwd, "release_notes.txt")
-    File.exist?(path) ? File.read(path).strip : "Hata düzeltmeleri ve iyileştirmeler."
+    # deploy.sh --notes="..." ile verilen metin her şeyin önüne geçer:
+    # her yükleme için dosya düzenlemek zorunda kalmamak içindir.
+    from_flag = ENV["DEPLOY_RELEASE_NOTES"].to_s.strip
+    if from_flag.empty?
+      path = File.join(Dir.pwd, "release_notes.txt")
+      File.exist?(path) ? File.read(path).strip : "Hata düzeltmeleri ve iyileştirmeler."
+    else
+      from_flag
+    end
   end
 
   desc "TestFlight'a hızlı yükleme (beta test)"
