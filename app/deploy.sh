@@ -153,6 +153,20 @@ export DEPLOY_LANE="$LANE"
 # o da yoksa varsayılan metne düşer.
 export DEPLOY_RELEASE_NOTES="${RELEASE_NOTES:-}"
 
+# Reklam birimi kimlikleri koda --dart-define ile gecer. .env'de tanimli
+# degilse kod Google'in TEST kimliklerine duser: gercek kimliklerle
+# gelistirme yapip kendi reklamina tiklamak AdMob hesabini kapattirir.
+DART_DEFINES=()
+[ -n "${ADMOB_BANNER_IOS:-}" ] && DART_DEFINES+=(--dart-define=ADMOB_BANNER_IOS="$ADMOB_BANNER_IOS")
+[ -n "${ADMOB_INTERSTITIAL_IOS:-}" ] && DART_DEFINES+=(--dart-define=ADMOB_INTERSTITIAL_IOS="$ADMOB_INTERSTITIAL_IOS")
+[ -n "${ADMOB_BANNER_ANDROID:-}" ] && DART_DEFINES+=(--dart-define=ADMOB_BANNER_ANDROID="$ADMOB_BANNER_ANDROID")
+[ -n "${ADMOB_INTERSTITIAL_ANDROID:-}" ] && DART_DEFINES+=(--dart-define=ADMOB_INTERSTITIAL_ANDROID="$ADMOB_INTERSTITIAL_ANDROID")
+[ -n "${API_BASE_URL:-}" ] && DART_DEFINES+=(--dart-define=API_BASE_URL="$API_BASE_URL")
+
+if [ ${#DART_DEFINES[@]} -gt 0 ]; then
+  echo "🎯 ${#DART_DEFINES[@]} adet --dart-define uygulanacak."
+fi
+
 # Mağaza hazırlık denetimi. forge kurulu değilse sessizce atlanır — bu betik
 # forge'a bağımlı olmamalı. Engel bulunursa yayın başlamadan durur; amaç tam
 # bir derleme ve yükleme turunu harcamadan önce hatayı görmek.
@@ -270,7 +284,7 @@ deploy_ios() {
   echo "🍎 iOS: Dart derleniyor ve Xcode yapılandırması üretiliyor..."
   # Bu adım Generated.xcconfig'i (CURRENT_PROJECT_VERSION dahil) pubspec'e göre yazar.
   # İmzalama fastlane'e (gym) bırakılır.
-  flutter build ios --release --no-codesign
+  flutter build ios --release --no-codesign "${DART_DEFINES[@]}"
 
   echo "🍎 iOS: Fastlane ile arşivleniyor ve yükleniyor (lane: $LANE)..."
   # clean: false — flutter build çıktısını yeniden derlememek için (bkz. ios/fastlane/Fastfile)
@@ -280,7 +294,7 @@ deploy_ios() {
 deploy_android() {
   echo ""
   echo "🤖 Android: App Bundle build alınıyor..."
-  flutter build appbundle --release
+  flutter build appbundle --release "${DART_DEFINES[@]}"
 
   echo "🤖 Android: Fastlane ile Play Store'a yükleniyor (lane: $LANE)..."
   (cd android && bundle exec fastlane "$LANE")

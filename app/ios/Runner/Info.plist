@@ -24,12 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<!-- AdMob uygulama kimliği. Bu anahtar olmadan reklam SDK'sı açılışta
-	     uygulamayı çökertir (GADInvalidInitializationException).
-	     Şu anki değer Google'ın TEST kimliğidir; gelir elde etmek için
-	     AdMob konsolundaki gerçek kimlikle değiştirin. -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-4293530643595446~1065274421</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
