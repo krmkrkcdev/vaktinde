@@ -68,9 +68,10 @@ class VaktindeApp extends StatelessWidget {
         // Senkronizasyon, hatırlatma deposuna bağımlıdır: sunucudan veri
         // geldiğinde listeyi ve bildirimleri tazelemesi gerekir.
         ChangeNotifierProxyProvider<ReminderStore, SyncController>(
-          create: (_) => SyncController(auth: auth),
+          create: (_) => SyncController(auth: auth, settings: settings),
           update: (_, reminders, controller) =>
-              (controller ?? SyncController(auth: auth))..attach(reminders),
+              (controller ?? SyncController(auth: auth, settings: settings))
+                ..attach(reminders),
         ),
       ],
       child: MaterialApp(

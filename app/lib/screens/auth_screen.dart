@@ -6,8 +6,8 @@ import '../state/auth_store.dart';
 
 /// Giriş ve kayıt ekranı.
 ///
-/// Bulut yedekleme isteğe bağlıdır: kullanıcı hesap açmadan da uygulamayı
-/// tam olarak kullanabilir. Bu ekran yalnızca ayarlardan açılır.
+/// Bulut yedekleme Premium bir özelliktir; bu ekrana yalnızca Premium
+/// aboneler ayarlardan ulaşır. Uygulamanın geri kalanı hesap gerektirmez.
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key, this.startWithRegister = false});
 

@@ -100,7 +100,7 @@ Uygulama çevrimdışı çalışır. Hatırlatmalarınız telefonunuzda saklanı
 bildirimler internet olmadan da gelir. Hesap açmadığınız sürece hiçbir
 veriniz dışarı çıkmaz.
 
-İsterseniz ücretsiz hesap açıp kayıtlarınızı yedekleyebilirsiniz; telefon
+Premium abonelikle kayıtlarınızı buluta yedekleyebilirsiniz; telefon
 değiştirdiğinizde giriş yapmanız yeterli olur.
 
 
@@ -129,7 +129,7 @@ Vakit-Nakit'nin ilk sürümü.
 • Tamamlamazsanız ısrarla tekrar hatırlatır
 • Düzenli ödemelerinizin haftalık, aylık ve yıllık toplamı
 • Belge fotoğrafı ekleme
-• Çevrimdışı çalışır; isteğe bağlı bulut yedekleme
+• Çevrimdışı çalışır; Premium ile bulut yedekleme
 ```
 
 ---

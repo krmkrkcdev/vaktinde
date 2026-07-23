@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../services/sync_service.dart';
 import 'auth_store.dart';
 import 'reminder_store.dart';
+import 'settings_store.dart';
 
 /// Senkronizasyonu arayüze bağlar: ne zaman çalışacağına karar verir ve
 /// sonucunu gösterilebilir bir duruma çevirir.
@@ -13,14 +14,23 @@ import 'reminder_store.dart';
 /// uygulama yerel veriyle çalışmaya devam eder; bir sonraki fırsatta
 /// yeniden denenir.
 class SyncController extends ChangeNotifier {
-  SyncController({required AuthStore auth})
+  SyncController({required AuthStore auth, required SettingsStore settings})
     : _auth = auth,
+      _settings = settings,
       _sync = SyncService(api: auth.api) {
     _auth.addListener(_onAuthChanged);
+    // Premium'a geçildiğinde birikmiş yerel değişiklikler yüklensin;
+    // premium bırakılırsa senkronizasyon durur.
+    _settings.addListener(_onAuthChanged);
   }
 
   final AuthStore _auth;
+  final SettingsStore _settings;
   final SyncService _sync;
+
+  /// Bulut yedekleme premium bir özelliktir. Hem giriş yapılmış hem de premium
+  /// olunmalı; ikisinden biri eksikse senkronizasyon çalışmaz.
+  bool get _canSync => _auth.isSignedIn && _settings.isPremium;
 
   ReminderStore? _reminders;
   SyncState _state = SyncState.idle;
@@ -34,27 +44,27 @@ class SyncController extends ChangeNotifier {
   void attach(ReminderStore reminders) {
     if (_reminders != null) return;
     _reminders = reminders;
-    // Oturum zaten açıksa açılışta bir tur senkronize et.
-    if (_auth.isSignedIn) unawaited(sync());
+    // Oturum açık VE premium ise açılışta bir tur senkronize et.
+    if (_canSync) unawaited(sync());
   }
 
   void _onAuthChanged() {
-    final signedIn = _auth.isSignedIn;
-    if (signedIn && !_wasSignedIn) {
-      // Yeni giriş: sunucudaki her şey çekilsin.
+    final canSync = _canSync;
+    if (canSync && !_wasSignedIn) {
+      // Yeni giriş ya da premium'a geçiş: sunucudaki her şey çekilsin.
       unawaited(sync());
-    } else if (!signedIn && _wasSignedIn) {
+    } else if (!canSync && _wasSignedIn) {
       // Çıkış: bir sonraki girişte baştan çekilsin diye imleç sıfırlanır.
       unawaited(SyncService.resetCursor());
       _state = SyncState.idle;
       _lastSuccess = null;
       notifyListeners();
     }
-    _wasSignedIn = signedIn;
+    _wasSignedIn = canSync;
   }
 
   Future<SyncState> sync() async {
-    if (!_auth.isSignedIn || _state == SyncState.running) return _state;
+    if (!_canSync || _state == SyncState.running) return _state;
 
     _state = SyncState.running;
     notifyListeners();
@@ -74,6 +84,7 @@ class SyncController extends ChangeNotifier {
   @override
   void dispose() {
     _auth.removeListener(_onAuthChanged);
+    _settings.removeListener(_onAuthChanged);
     super.dispose();
   }
 }

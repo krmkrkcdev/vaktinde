@@ -127,8 +127,9 @@ class SettingsScreen extends StatelessWidget {
                   ? 'Hatırlatmalarınız ve belge fotoğraflarınız telefonunuzda '
                         'saklanır ve hesabınıza yedeklenir. Çıkış yaparsanız '
                         'yedekleme durur, kayıtlarınız telefonda kalır.'
-                  : 'Verileriniz yalnızca bu telefonda saklanır. Giriş '
-                        'yapmadığınız sürece sunucuya hiçbir bilgi gönderilmez.',
+                  : 'Verileriniz yalnızca bu telefonda saklanır. Bulut '
+                        'yedekleme Premium aboneliğe özeldir; abone '
+                        'olmadığınız sürece sunucuya hiçbir bilgi gönderilmez.',
               style: const TextStyle(fontSize: 12.5, height: 1.4),
             ),
           ),
@@ -246,7 +247,24 @@ class _AccountSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthStore>();
     final sync = context.watch<SyncController>();
+    final isPremium = context.watch<SettingsStore>().isPremium;
     final scheme = Theme.of(context).colorScheme;
+
+    // Bulut yedekleme premium bir özellik. Premium değilse giriş ekranı yerine
+    // premium tanıtımına yönlendirilir.
+    if (!isPremium) {
+      return ListTile(
+        leading: Icon(Icons.cloud_outlined, color: scheme.primary),
+        title: const Text('Bulut yedekleme'),
+        subtitle: const Text(
+          'Premium ile: telefon değiştirdiğinizde kayıtlarınız geri gelsin',
+        ),
+        trailing: const Icon(Icons.workspace_premium_outlined),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const PremiumScreen())),
+      );
+    }
 
     if (!auth.isSignedIn) {
       return ListTile(
