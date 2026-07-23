@@ -1,7 +1,9 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
@@ -11,6 +13,11 @@ from .routers import auth, photos, sync
 
 logger = logging.getLogger("vaktinde")
 settings = get_settings()
+
+# Açılışta bir kez okunur: her istekte diske gitmenin anlamı yok.
+_PRIVACY_HTML = (Path(__file__).parent / "static" / "gizlilik.html").read_text(
+    encoding="utf-8"
+)
 
 
 @asynccontextmanager
@@ -46,6 +53,17 @@ if settings.cors_origin_list:
 app.include_router(auth.router)
 app.include_router(sync.router)
 app.include_router(photos.router)
+
+
+@app.get("/gizlilik", response_class=HTMLResponse, tags=["system"])
+def privacy_policy() -> HTMLResponse:
+    """Gizlilik politikası.
+
+    App Store ve AdMob, uygulamanın herkese açık bir gizlilik politikası
+    adresi sunmasını zorunlu tutuyor. Sayfa statik olduğu için şablon motoru
+    yerine doğrudan dosyadan okunuyor.
+    """
+    return HTMLResponse(_PRIVACY_HTML)
 
 
 @app.get("/health", tags=["system"])
