@@ -1,6 +1,6 @@
-# App Store mağaza metinleri — Vakitlice
+# App Store mağaza metinleri — Vakit-Nakit
 
-App Store Connect → Vakitlice → Uygulama Bilgileri / Sürüm Bilgileri
+App Store Connect → Vakit-Nakit → Uygulama Bilgileri / Sürüm Bilgileri
 bölümlerine girilecek metinler. Karakter sınırları Apple'ın koyduğu üst
 sınırlardır; sayımlar bu dosyadaki metinlere aittir.
 
@@ -9,7 +9,7 @@ sınırlardır; sayımlar bu dosyadaki metinlere aittir.
 ## Uygulama adı (30 karakter)
 
 ```
-Vakitlice
+Vakit-Nakit
 ```
 
 ## Alt başlık (30 karakter)
@@ -45,7 +45,7 @@ gelince biz hatırlatalım. Çevrimdışı çalışır, internet gerektirmez.
 
 ```
 Kira ödemesini, aidat gününü, trafik sigortasının bitişini ya da araç
-muayenesini kaçırmak pahalıya mal olur. Vakitlice bu tarihleri sizin
+muayenesini kaçırmak pahalıya mal olur. Vakit-Nakit bu tarihleri sizin
 yerinize takip eder.
 
 Bir kez yazarsınız, gerisini uygulama hatırlar.
@@ -122,7 +122,7 @@ Gizlilik politikası: https://vaktinde.devposs.com/gizlilik
 ## Sürüm notları — 1.0.0 (What's New)
 
 ```
-Vakitlice'nin ilk sürümü.
+Vakit-Nakit'nin ilk sürümü.
 
 • Kira, fatura, aidat, sigorta, muayene ve abonelik takibi
 • Kaç gün önceden ve saat kaçta hatırlatılacağını siz seçersiniz

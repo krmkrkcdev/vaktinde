@@ -74,7 +74,7 @@ class VaktindeApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Vakitlice',
+        title: 'Vakit-Nakit',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
