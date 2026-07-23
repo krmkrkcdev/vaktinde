@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vaktinde/models/payment_totals.dart';
 import 'package:vaktinde/models/reminder.dart';
 import 'package:vaktinde/models/reminder_category.dart';
 import 'package:vaktinde/models/repeat_interval.dart';
@@ -195,10 +196,10 @@ void main() {
       final original = buildReminder().copyWith(
         photoPaths: ['belge_1.jpg', 'belge_2.jpg'],
       );
-      expect(
-        Reminder.fromMap(original.toMap()).photoPaths,
-        ['belge_1.jpg', 'belge_2.jpg'],
-      );
+      expect(Reminder.fromMap(original.toMap()).photoPaths, [
+        'belge_1.jpg',
+        'belge_2.jpg',
+      ]);
     });
 
     test('fotoğrafsız kayıt boş liste olarak okunur', () {
@@ -294,7 +295,10 @@ void main() {
       expect(SyncService.photoIdFromFileName('belge_$uuid.jpg'), uuid);
       expect(SyncService.photoIdFromFileName('belge_$uuid.png'), uuid);
       // v3 öncesi zaman damgalı adlar senkronize edilemez.
-      expect(SyncService.photoIdFromFileName('belge_1784723118218_11369.jpg'), isNull);
+      expect(
+        SyncService.photoIdFromFileName('belge_1784723118218_11369.jpg'),
+        isNull,
+      );
     });
   });
 
@@ -320,5 +324,102 @@ void main() {
   test('copyWith ile not temizlenebilir', () {
     final withNote = buildReminder().copyWith(note: 'Poliçe 123');
     expect(withNote.copyWith(clearNote: true).note, isNull);
+  });
+
+  _paymentTotalsTests();
+}
+
+void _paymentTotalsTests() {
+  Reminder payment(double amount, RepeatInterval repeat) => Reminder.create(
+    categoryId: 'fatura',
+    title: 'Test',
+    dueDate: DateTime(2026, 8, 1),
+    leadDays: const [0],
+    notifyHour: 9,
+    notifyMinute: 0,
+    repeat: repeat,
+    amount: amount,
+  );
+
+  group('PaymentTotals', () {
+    test('aylık ödeme yıllık karşılığına çevrilir', () {
+      final totals = PaymentTotals.from([payment(700, RepeatInterval.monthly)]);
+      expect(totals.yearly, 8400);
+      expect(totals.monthly, closeTo(700, 0.01));
+      expect(totals.countedReminders, 1);
+    });
+
+    test('farklı aralıklar ortak ölçekte toplanır', () {
+      // Aylık 100 (yılda 1200) + yıllık 1200 = 2400
+      final totals = PaymentTotals.from([
+        payment(100, RepeatInterval.monthly),
+        payment(1200, RepeatInterval.yearly),
+      ]);
+      expect(totals.yearly, 2400);
+      expect(totals.monthly, closeTo(200, 0.01));
+    });
+
+    test('tek seferlik kayıtlar düzenli gidere sayılmaz', () {
+      final totals = PaymentTotals.from([payment(500, RepeatInterval.none)]);
+      expect(totals.isEmpty, isTrue);
+      expect(totals.yearly, 0);
+    });
+
+    test('saat başı tekrar toplama dahil edilmez', () {
+      // İlaç gibi kayıtlar ödeme değildir; yılda 8760 kez sayılması toplamı
+      // anlamsız kılardı.
+      final totals = PaymentTotals.from([payment(10, RepeatInterval.hourly)]);
+      expect(totals.isEmpty, isTrue);
+    });
+
+    test('tutarsız hatırlatmalar atlanır', () {
+      final noAmount = Reminder.create(
+        categoryId: 'fatura',
+        title: 'Tutarsız',
+        dueDate: DateTime(2026, 8, 1),
+        leadDays: const [0],
+        notifyHour: 9,
+        notifyMinute: 0,
+        repeat: RepeatInterval.monthly,
+      );
+      expect(PaymentTotals.from([noAmount]).isEmpty, isTrue);
+    });
+  });
+
+  group('tekrar hatırlatma (nag)', () {
+    test('nag aralığı son gün içinde ek bildirimler üretir', () {
+      final due = DateTime.now().add(const Duration(days: 2));
+      final reminder = Reminder.create(
+        categoryId: 'fatura',
+        title: 'Kira',
+        dueDate: DateTime(due.year, due.month, due.day),
+        leadDays: const [0],
+        notifyHour: 9,
+        notifyMinute: 0,
+        nagIntervalHours: 3,
+        repeat: RepeatInterval.none,
+      );
+
+      final times = reminder.upcomingNotificationTimes();
+      // 09:00 (asıl) + 12:00, 15:00, 18:00, 21:00 (tekrarlar)
+      expect(times.length, greaterThan(1));
+      expect(times.first.hour, 9);
+      // Hiçbiri ertesi güne taşmamalı.
+      expect(times.every((t) => t.day == due.day), isTrue);
+    });
+
+    test('nag kapalıyken yalnızca asıl bildirim kurulur', () {
+      final due = DateTime.now().add(const Duration(days: 2));
+      final reminder = Reminder.create(
+        categoryId: 'fatura',
+        title: 'Kira',
+        dueDate: DateTime(due.year, due.month, due.day),
+        leadDays: const [0],
+        notifyHour: 9,
+        notifyMinute: 0,
+        repeat: RepeatInterval.none,
+      );
+      expect(reminder.upcomingNotificationTimes().length, 1);
+    });
   });
 }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/reminder.dart';
 import '../state/reminder_store.dart';
 import 'premium_screen.dart';
+import '../theme/app_theme.dart';
 
 /// Tamamlanmış / arşivlenmiş hatırlatmalar.
 class ArchiveScreen extends StatelessWidget {
@@ -71,11 +72,15 @@ class ArchiveScreen extends StatelessWidget {
     try {
       await store.restore(reminder);
       messenger.showSnackBar(
-        SnackBar(content: Text('"${reminder.title}" listeye geri alındı.')),
+        SnackBar(
+          duration: kSnackDuration,
+          content: Text('"${reminder.title}" listeye geri alındı.'),
+        ),
       );
     } on ReminderLimitException catch (e) {
       messenger.showSnackBar(
         SnackBar(
+          duration: kSnackDuration,
           content: Text('Ücretsiz sürümde en fazla ${e.limit} hatırlatma.'),
           action: SnackBarAction(
             label: 'Premium',

@@ -20,6 +20,7 @@ class Reminder {
     required this.leadDays,
     required this.notifyHour,
     required this.notifyMinute,
+    this.nagIntervalHours,
     required this.repeat,
     this.isArchived = false,
     this.amount,
@@ -59,6 +60,13 @@ class Reminder {
   final int notifyHour;
   final int notifyMinute;
 
+  /// Son gün geldiğinde, kullanıcı "tamamlandı" demediği sürece kaç saatte
+  /// bir tekrar hatırlatılacağı. null ise tek bildirim gönderilir.
+  ///
+  /// Tamamlandı işaretlenince kaydın tüm bildirimleri iptal edildiği için
+  /// tekrarlar da kendiliğinden durur.
+  final int? nagIntervalHours;
+
   final RepeatInterval repeat;
   final bool isArchived;
 
@@ -84,6 +92,7 @@ class Reminder {
     required List<int> leadDays,
     required int notifyHour,
     required int notifyMinute,
+    int? nagIntervalHours,
     required RepeatInterval repeat,
     double? amount,
     List<String> photoPaths = const [],
@@ -99,6 +108,7 @@ class Reminder {
       leadDays: leadDays,
       notifyHour: notifyHour,
       notifyMinute: notifyMinute,
+      nagIntervalHours: nagIntervalHours,
       repeat: repeat,
       amount: amount,
       photoPaths: photoPaths,
@@ -120,12 +130,21 @@ class Reminder {
   bool get isDueToday => daysRemaining == 0;
 
   /// Bu hatırlatma için planlanacak bildirim zamanları (yalnızca gelecektekiler).
-  List<DateTime> upcomingNotificationTimes() {
+  ///
+  /// [nagIntervalHours] doluysa son gün bildiriminden sonra aynı gün içinde
+  /// belirtilen aralıklarla ek bildirimler üretilir: kullanıcı "tamamlandı"
+  /// demediği sürece hatırlatma ısrar eder. Tamamlandı işaretlenince kaydın
+  /// bütün bildirimleri iptal edildiği için tekrarlar da durur.
+  ///
+  /// [maxSlots] işletim sistemine kurulabilecek bildirim sayısıdır; iOS'un
+  /// uygulama başına 64 bekleyen bildirim sınırı yüzünden sınırsız üretilemez.
+  List<DateTime> upcomingNotificationTimes({int maxSlots = 8}) {
     final now = DateTime.now();
+    final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
     final times = <DateTime>[];
+
     for (final lead in leadDays) {
-      final base = DateTime(dueDate.year, dueDate.month, dueDate.day)
-          .subtract(Duration(days: lead));
+      final base = dueDay.subtract(Duration(days: lead));
       final at = DateTime(
         base.year,
         base.month,
@@ -135,7 +154,29 @@ class Reminder {
       );
       if (at.isAfter(now)) times.add(at);
     }
-    return times;
+
+    final nag = nagIntervalHours;
+    if (nag != null && nag > 0) {
+      // Israrlı hatırlatmalar son günün bildirim saatinden başlar ve gün
+      // sonuna kadar sürer; ertesi güne taşmaz, çünkü o noktada tarih zaten
+      // geçmiştir ve kullanıcıyı sürekli rahatsız etmenin faydası yoktur.
+      final dayEnd = dueDay.add(const Duration(days: 1));
+      var at = DateTime(
+        dueDay.year,
+        dueDay.month,
+        dueDay.day,
+        notifyHour,
+        notifyMinute,
+      ).add(Duration(hours: nag));
+
+      while (at.isBefore(dayEnd) && times.length < maxSlots) {
+        if (at.isAfter(now)) times.add(at);
+        at = at.add(Duration(hours: nag));
+      }
+    }
+
+    times.sort();
+    return times.length > maxSlots ? times.sublist(0, maxSlots) : times;
   }
 
   Reminder copyWith({
@@ -152,6 +193,8 @@ class Reminder {
     List<int>? leadDays,
     int? notifyHour,
     int? notifyMinute,
+    int? nagIntervalHours,
+    bool clearNagInterval = false,
     RepeatInterval? repeat,
     bool? isArchived,
     double? amount,
@@ -173,6 +216,9 @@ class Reminder {
       leadDays: leadDays ?? this.leadDays,
       notifyHour: notifyHour ?? this.notifyHour,
       notifyMinute: notifyMinute ?? this.notifyMinute,
+      nagIntervalHours: clearNagInterval
+          ? null
+          : (nagIntervalHours ?? this.nagIntervalHours),
       repeat: repeat ?? this.repeat,
       isArchived: isArchived ?? this.isArchived,
       amount: clearAmount ? null : (amount ?? this.amount),
@@ -195,6 +241,7 @@ class Reminder {
       'lead_days': leadDays.join(','),
       'notify_hour': notifyHour,
       'notify_minute': notifyMinute,
+      'nag_interval_hours': nagIntervalHours,
       'repeat_interval': repeat.id,
       'is_archived': isArchived ? 1 : 0,
       'amount': amount,
@@ -206,12 +253,13 @@ class Reminder {
 
   factory Reminder.fromMap(Map<String, Object?> map) {
     final rawLeads = (map['lead_days'] as String?) ?? '';
-    final leads = rawLeads
-        .split(',')
-        .map((e) => int.tryParse(e.trim()))
-        .whereType<int>()
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
+    final leads =
+        rawLeads
+            .split(',')
+            .map((e) => int.tryParse(e.trim()))
+            .whereType<int>()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
 
     return Reminder(
       id: map['id'] as int?,
@@ -228,7 +276,10 @@ class Reminder {
       leadDays: leads.isEmpty ? const [0] : leads,
       notifyHour: map['notify_hour'] as int? ?? 9,
       notifyMinute: map['notify_minute'] as int? ?? 0,
-      repeat: RepeatInterval.fromId(map['repeat_interval'] as String? ?? 'none'),
+      nagIntervalHours: map['nag_interval_hours'] as int?,
+      repeat: RepeatInterval.fromId(
+        map['repeat_interval'] as String? ?? 'none',
+      ),
       isArchived: (map['is_archived'] as int? ?? 0) == 1,
       amount: (map['amount'] as num?)?.toDouble(),
       photoPaths: ((map['photo_paths'] as String?) ?? '')
@@ -251,6 +302,7 @@ class Reminder {
       'lead_days': leadDays.join(','),
       'notify_hour': notifyHour,
       'notify_minute': notifyMinute,
+      'nag_interval_hours': nagIntervalHours,
       'repeat_interval': repeat.id,
       'is_archived': isArchived,
       'amount': amount,
@@ -264,12 +316,13 @@ class Reminder {
   /// çağıran tarafından eşleştirilir.
   factory Reminder.fromApi(Map<String, Object?> json) {
     final rawLeads = (json['lead_days'] as String?) ?? '';
-    final leads = rawLeads
-        .split(',')
-        .map((e) => int.tryParse(e.trim()))
-        .whereType<int>()
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
+    final leads =
+        rawLeads
+            .split(',')
+            .map((e) => int.tryParse(e.trim()))
+            .whereType<int>()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
 
     return Reminder(
       uuid: json['id'] as String,
@@ -284,7 +337,12 @@ class Reminder {
       leadDays: leads.isEmpty ? const [0] : leads,
       notifyHour: json['notify_hour'] as int? ?? 9,
       notifyMinute: json['notify_minute'] as int? ?? 0,
-      repeat: RepeatInterval.fromId(json['repeat_interval'] as String? ?? 'none'),
+      // Sunucu bu alanı henüz döndürmüyorsa null kalır; yerel değer korunmaz
+      // ama bildirim yine varsayılan ayarla planlanır.
+      nagIntervalHours: json['nag_interval_hours'] as int?,
+      repeat: RepeatInterval.fromId(
+        json['repeat_interval'] as String? ?? 'none',
+      ),
       isArchived: json['is_archived'] as bool? ?? false,
       amount: (json['amount'] as num?)?.toDouble(),
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),

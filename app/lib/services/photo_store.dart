@@ -41,12 +41,13 @@ class PhotoStore {
   }
 
   /// Kamerayı açar ve çekilen fotoğrafı saklar. Kullanıcı vazgeçerse `null`.
-  Future<String?> captureFromCamera() =>
-      _pickAndStore(() => _picker.pickImage(
-            source: ImageSource.camera,
-            maxWidth: 2000,
-            imageQuality: 85,
-          ));
+  Future<String?> captureFromCamera() => _pickAndStore(
+    () => _picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 2000,
+      imageQuality: 85,
+    ),
+  );
 
   /// Galeriden birden fazla fotoğraf seçtirir ve hepsini saklar.
   Future<List<String>> pickFromGallery() async {

@@ -9,8 +9,10 @@ import '../models/repeat_interval.dart';
 import '../services/notification_service.dart';
 import '../state/reminder_store.dart';
 import '../state/settings_store.dart';
+import '../widgets/nag_interval_selector.dart';
 import '../widgets/photo_gallery_field.dart';
 import 'premium_screen.dart';
+import '../theme/app_theme.dart';
 
 /// Yeni hatırlatma eklemek için adım adım kurulum akışı.
 ///
@@ -37,9 +39,10 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
   ReminderCategory? _category;
   RepeatInterval? _repeat;
 
-  /// Takvimde baştan bir gün seçili görünür; aksi hâlde kullanıcı seçili bir
-  /// tarihe bakarken "Devam et" kapalı kalır ve neden ilerleyemediğini anlamaz.
-  DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
+  /// Takvim bugünle açılır. Baştan ileri bir tarih seçili gelmesi, kullanıcı
+  /// fark etmeden yanlış tarihle kaydetmesine yol açıyordu; hızlı seçim için
+  /// "1 ay sonra / 3 ay sonra / 1 yıl sonra" kısayolları zaten var.
+  DateTime _dueDate = DateTime.now();
   Set<int> _leadDays = {};
   List<String> _photoNames = [];
 
@@ -47,6 +50,10 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
   /// varsayılan saat kullanılır — sihirbazı bir adım daha uzatmamak için
   /// saat seçimi bilinçli olarak isteğe bağlıdır.
   TimeOfDay? _notifyTime;
+
+  /// Tamamlanmadığında kaç saatte bir tekrar hatırlatılacağı. null ise
+  /// ayarlardaki varsayılan kullanılır.
+  int? _nagIntervalHours;
 
   bool _saving = false;
 
@@ -136,6 +143,10 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
       // Saat seçilmediyse ayarlardaki varsayılan geçerli olur.
       notifyHour: (_notifyTime ?? settings.defaultNotifyTime).hour,
       notifyMinute: (_notifyTime ?? settings.defaultNotifyTime).minute,
+      nagIntervalHours: () {
+        final hours = _nagIntervalHours ?? settings.defaultNagIntervalHours;
+        return hours > 0 ? hours : null;
+      }(),
       repeat: _repeat ?? RepeatInterval.none,
       amount: _parseAmount(_amountController.text),
       photoPaths: _photoNames,
@@ -146,13 +157,17 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
       await store.add(reminder);
       navigator.pop();
       messenger.showSnackBar(
-        SnackBar(content: Text('"${reminder.title}" kaydedildi.')),
+        SnackBar(
+          duration: kSnackDuration,
+          content: Text('"${reminder.title}" kaydedildi.'),
+        ),
       );
     } on ReminderLimitException catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
       messenger.showSnackBar(
         SnackBar(
+          duration: kSnackDuration,
           content: Text('Ücretsiz sürümde en fazla ${e.limit} hatırlatma.'),
           action: SnackBarAction(
             label: 'Premium',
@@ -165,7 +180,9 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text('Kaydedilemedi: $e')));
+      messenger.showSnackBar(
+        SnackBar(duration: kSnackDuration, content: Text('Kaydedilemedi: $e')),
+      );
     }
   }
 
@@ -287,8 +304,10 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
           decoration: InputDecoration(
             hintText: category.hint,
             hintStyle: const TextStyle(fontSize: 19),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 20,
+            ),
           ),
         ),
         if (category.suggestions.isNotEmpty) ...[
@@ -440,13 +459,41 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _Question(
+          repeat.isContinuous
+              ? (repeat == RepeatInterval.daily
+                    ? 'Her gün saat kaçta?'
+                    : 'Her hafta saat kaçta?')
+              : 'Ne zaman haber verelim?',
+        ),
+        _Hint(
+          repeat.isContinuous
+              ? 'Bu hatırlatma siz durdurana kadar tekrar edecek.'
+              : 'Önce saati seçin, sonra kaç gün önceden uyarılmak '
+                    'istediğinizi işaretleyin.',
+        ),
+        const SizedBox(height: 20),
+
+        // Saat seçimi bilinçli olarak en üstte: gün seçenekleri sekiz tane
+        // olduğu için altta kalsaydı kaydırmadan görünmez ve kullanıcı
+        // saat seçebildiğini fark etmezdi.
+        _FieldLabel('Saat', icon: Icons.schedule_outlined),
+        const SizedBox(height: 8),
+        _BigTile(
+          icon: Icons.access_time,
+          iconColor: Theme.of(context).colorScheme.primary,
+          label: _notifyTime == null
+              ? '${effectiveTime.format(context)}  (varsayılan)'
+              : effectiveTime.format(context),
+          selected: _notifyTime != null,
+          onTap: _pickNotifyTime,
+        ),
+
         if (!repeat.isContinuous) ...[
-          const _Question('Kaç gün önce haber verelim?'),
-          const _Hint(
-            'Birden fazla seçebilirsiniz. Yalnızca seçtiğiniz günlerde bildirim '
-            'gönderilir.',
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 26),
+          _FieldLabel('Kaç gün önce?', icon: Icons.event_outlined),
+          const _Hint('Birden fazla seçebilirsiniz.'),
+          const SizedBox(height: 12),
           for (final option in _leadOptions) ...[
             _BigTile(
               icon: _leadDays.contains(option)
@@ -461,42 +508,33 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
             ),
             const SizedBox(height: 10),
           ],
-          const SizedBox(height: 22),
-        ] else ...[
-          _Question(
-            repeat == RepeatInterval.daily
-                ? 'Her gün saat kaçta?'
-                : 'Her hafta saat kaçta?',
-          ),
+
+          const SizedBox(height: 26),
+          _FieldLabel('Tamamlamazsam tekrar hatırlat', icon: Icons.replay),
           const _Hint(
-            'Bu hatırlatma siz durdurana kadar tekrar edecek.',
+            'Son gün geldiğinde "tamamlandı" demezseniz aynı gün içinde '
+            'belirlediğiniz aralıkla tekrar hatırlatılır.',
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          NagIntervalSelector(
+            valueHours: _effectiveNag,
+            onChanged: (hours) => setState(() => _nagIntervalHours = hours),
+          ),
         ],
-        if (!repeat.isContinuous)
-          _FieldLabel('Saat kaçta?', icon: Icons.schedule_outlined),
-        _Hint(
-          _notifyTime == null
-              ? 'Ayarlardaki varsayılan saat kullanılacak. Değiştirmek için '
-                    'dokunun.'
-              : 'Bu hatırlatma için özel saat seçildi.',
-        ),
-        const SizedBox(height: 12),
-        _BigTile(
-          icon: Icons.access_time,
-          iconColor: Theme.of(context).colorScheme.primary,
-          label: effectiveTime.format(context),
-          selected: _notifyTime != null,
-          onTap: _pickNotifyTime,
-        ),
       ],
     );
   }
 
+  /// Kullanıcı seçmediyse ayarlardaki varsayılan geçerlidir.
+  int get _effectiveNag =>
+      _nagIntervalHours ??
+      context.read<SettingsStore>().defaultNagIntervalHours;
+
   Future<void> _pickNotifyTime() async {
     final picked = await showTimePicker(
       context: context,
-      initialTime: _notifyTime ?? context.read<SettingsStore>().defaultNotifyTime,
+      initialTime:
+          _notifyTime ?? context.read<SettingsStore>().defaultNotifyTime,
       helpText: 'Bildirim saati',
       cancelText: 'Vazgeç',
       confirmText: 'Seç',
@@ -524,8 +562,7 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
           decoration: const InputDecoration(
             hintText: 'Örn. 1.250,00',
             suffixText: '₺',
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           ),
         ),
         const SizedBox(height: 26),
@@ -548,8 +585,7 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
           style: const TextStyle(fontSize: 18),
           decoration: const InputDecoration(
             hintText: 'Poliçe numarası, kurum adı, IBAN…',
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           ),
         ),
         const SizedBox(height: 28),
@@ -800,7 +836,9 @@ class _Summary extends StatelessWidget {
             ),
           _SummaryRow(
             label: 'Tekrar',
-            value: repeat == RepeatInterval.none ? 'Sadece bir kez' : repeat.label,
+            value: repeat == RepeatInterval.none
+                ? 'Sadece bir kez'
+                : repeat.label,
           ),
           if (!repeat.isContinuous)
             _SummaryRow(label: 'Bildirim', value: leadText),

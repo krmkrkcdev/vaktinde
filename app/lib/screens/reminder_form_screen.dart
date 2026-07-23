@@ -9,8 +9,10 @@ import '../models/repeat_interval.dart';
 import '../services/notification_service.dart';
 import '../state/reminder_store.dart';
 import '../state/settings_store.dart';
+import '../widgets/nag_interval_selector.dart';
 import '../widgets/photo_gallery_field.dart';
 import 'premium_screen.dart';
+import '../theme/app_theme.dart';
 
 /// Kategori seç → başlık yaz → tarih belirle → kaç gün önce → kaydet.
 class ReminderFormScreen extends StatefulWidget {
@@ -34,6 +36,9 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   late DateTime _dueDate;
   late Set<int> _leadDays;
   late TimeOfDay _notifyTime;
+
+  /// 0 = tamamlanmazsa tekrar hatırlatma kapalı.
+  late int _nagIntervalHours;
   late RepeatInterval _repeat;
   late List<String> _photoNames;
   bool _saving = false;
@@ -54,19 +59,22 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
         hour: existing.notifyHour,
         minute: existing.notifyMinute,
       );
+      _nagIntervalHours = existing.nagIntervalHours ?? 0;
       _repeat = existing.repeat;
       _photoNames = [...existing.photoPaths];
       _titleController.text = existing.title;
       _noteController.text = existing.note ?? '';
       if (existing.amount != null) {
-        _amountController.text =
-            existing.amount!.toStringAsFixed(existing.amount! % 1 == 0 ? 0 : 2);
+        _amountController.text = existing.amount!.toStringAsFixed(
+          existing.amount! % 1 == 0 ? 0 : 2,
+        );
       }
     } else {
       _category = ReminderCategory.all.first;
       _dueDate = DateTime.now().add(const Duration(days: 30));
       _leadDays = _category.defaultLeadDays.toSet();
       _notifyTime = defaultTime;
+      _nagIntervalHours = context.read<SettingsStore>().defaultNagIntervalHours;
       _repeat = _category.defaultRepeat;
       _photoNames = [];
     }
@@ -82,8 +90,10 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
 
   void _selectCategory(ReminderCategory category) {
     setState(() {
-      final wasDefaultLeads =
-          _setEquals(_leadDays, _category.defaultLeadDays.toSet());
+      final wasDefaultLeads = _setEquals(
+        _leadDays,
+        _category.defaultLeadDays.toSet(),
+      );
       final wasDefaultRepeat = _repeat == _category.defaultRepeat;
       _category = category;
       // Kullanıcı elle değiştirmediyse yeni kategorinin önerilerini uygula.
@@ -151,6 +161,10 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             leadDays: leads,
             notifyHour: _notifyTime.hour,
             notifyMinute: _notifyTime.minute,
+            nagIntervalHours: _nagIntervalHours > 0 ? _nagIntervalHours : null,
+            // clearNagInterval olmadan "Kapalı" seçimi işlemezdi: copyWith
+            // null değeri "değişiklik yok" sayıp eski aralığı korur.
+            clearNagInterval: _nagIntervalHours == 0,
             repeat: _repeat,
             amount: amount,
             clearAmount: amount == null,
@@ -164,6 +178,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             leadDays: leads,
             notifyHour: _notifyTime.hour,
             notifyMinute: _notifyTime.minute,
+            nagIntervalHours: _nagIntervalHours > 0 ? _nagIntervalHours : null,
             repeat: _repeat,
             amount: amount,
             photoPaths: _photoNames,
@@ -182,6 +197,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       setState(() => _saving = false);
       messenger.showSnackBar(
         SnackBar(
+          duration: kSnackDuration,
           content: Text('Ücretsiz sürümde en fazla ${e.limit} hatırlatma.'),
           action: SnackBarAction(
             label: 'Premium',
@@ -194,7 +210,9 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text('Kaydedilemedi: $e')));
+      messenger.showSnackBar(
+        SnackBar(duration: kSnackDuration, content: Text('Kaydedilemedi: $e')),
+      );
     }
   }
 
@@ -205,8 +223,9 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
   }
 
   void _snack(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(duration: kSnackDuration, content: Text(message)));
   }
 
   Future<void> _confirmDelete() async {
@@ -290,8 +309,9 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                 hintText: _category.hint,
                 prefixIcon: const Icon(Icons.title),
               ),
-              validator: (value) =>
-                  (value == null || value.trim().isEmpty) ? 'Başlık gerekli' : null,
+              validator: (value) => (value == null || value.trim().isEmpty)
+                  ? 'Başlık gerekli'
+                  : null,
             ),
 
             const _SectionLabel('Son tarih'),
@@ -337,6 +357,20 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
               onTap: _pickTime,
             ),
 
+            const _SectionLabel('Tamamlamazsam tekrar hatırlat'),
+            NagIntervalSelector(
+              valueHours: _nagIntervalHours,
+              onChanged: (hours) => setState(() => _nagIntervalHours = hours),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 4),
+              child: Text(
+                'Son gün "tamamlandı" demezseniz aynı gün içinde bu aralıkla '
+                'tekrar hatırlatılır.',
+                style: TextStyle(fontSize: 12.5, color: scheme.outline),
+              ),
+            ),
+
             const _SectionLabel('Tekrar'),
             // SegmentedButton kullanılmıyor: seçenekler yan yana sığmıyor ve
             // etiketler kırpılıyordu. Açılır liste hem taşmaz hem seçenek
@@ -344,9 +378,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             DropdownButtonFormField<RepeatInterval>(
               initialValue: _repeat,
               isExpanded: true,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.repeat),
-              ),
+              decoration: const InputDecoration(prefixIcon: Icon(Icons.repeat)),
               items: [
                 for (final r in RepeatInterval.values)
                   DropdownMenuItem(
@@ -364,7 +396,9 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             const _SectionLabel('Tutar (isteğe bağlı)'),
             TextFormField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
               ],
@@ -403,7 +437,9 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(_isEditing ? 'Değişiklikleri kaydet' : 'Hatırlatmayı kaydet'),
+              : Text(
+                  _isEditing ? 'Değişiklikleri kaydet' : 'Hatırlatmayı kaydet',
+                ),
         ),
       ),
     );
@@ -411,14 +447,15 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
 
   String _remainingLabel() {
     final today = DateTime.now();
-    final days = DateTime(_dueDate.year, _dueDate.month, _dueDate.day)
-        .difference(DateTime(today.year, today.month, today.day))
-        .inDays;
+    final days = DateTime(
+      _dueDate.year,
+      _dueDate.month,
+      _dueDate.day,
+    ).difference(DateTime(today.year, today.month, today.day)).inDays;
     if (days < 0) return '${-days} gün geçti';
     if (days == 0) return 'Bugün';
     return '$days gün';
   }
-
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -466,7 +503,9 @@ class _TappableField extends StatelessWidget {
         decoration: InputDecoration(prefixIcon: Icon(icon)),
         child: Row(
           children: [
-            Expanded(child: Text(label, style: const TextStyle(fontSize: 15.5))),
+            Expanded(
+              child: Text(label, style: const TextStyle(fontSize: 15.5)),
+            ),
             if (trailing != null)
               Text(
                 trailing!,

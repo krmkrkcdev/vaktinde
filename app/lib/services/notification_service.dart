@@ -58,7 +58,8 @@ class NotificationService {
     if (Platform.isAndroid) {
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(
             const AndroidNotificationChannel(
               _channelId,
@@ -77,8 +78,10 @@ class NotificationService {
     await init();
 
     if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       final granted = await android?.requestNotificationsPermission() ?? false;
       // Tam zamanlı alarm izni ayrı bir izindir; reddedilse bile bildirimler
       // yaklaşık zamanla (inexact) gönderilmeye devam eder.
@@ -87,8 +90,10 @@ class NotificationService {
     }
 
     if (Platform.isIOS) {
-      final ios = _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       return await ios?.requestPermissions(
             alert: true,
             badge: true,
@@ -114,12 +119,19 @@ class NotificationService {
     // hem iOS'un uygulama başına 64 bekleyen bildirim sınırını tüketir hem
     // de belirli bir noktada biterdi.
     if (reminder.repeat.isContinuous) {
-      await _scheduleContinuous(reminder, notificationId: _notificationId(id, 0));
+      await _scheduleContinuous(
+        reminder,
+        notificationId: _notificationId(id, 0),
+      );
       return;
     }
 
     final times = reminder.upcomingNotificationTimes();
-    for (var slot = 0; slot < times.length && slot < _slotsPerReminder; slot++) {
+    for (
+      var slot = 0;
+      slot < times.length && slot < _slotsPerReminder;
+      slot++
+    ) {
       await _scheduleOne(
         notificationId: _notificationId(id, slot),
         at: times[slot],
@@ -233,7 +245,9 @@ class NotificationService {
 
     final date = DateFormat('d MMMM yyyy', 'tr_TR').format(reminder.dueDate);
     final days = reminder.daysRemaining;
-    final when = days <= 0 ? 'Son gün: $date' : '$date tarihinde ($days gün kaldı)';
+    final when = days <= 0
+        ? 'Son gün: $date'
+        : '$date tarihinde ($days gün kaldı)';
     if (reminder.amount != null) {
       final amount = NumberFormat.currency(
         locale: 'tr_TR',

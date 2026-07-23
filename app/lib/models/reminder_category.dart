@@ -190,9 +190,6 @@ class ReminderCategory {
   ];
 
   static ReminderCategory byId(String id) {
-    return all.firstWhere(
-      (c) => c.id == id,
-      orElse: () => all.last,
-    );
+    return all.firstWhere((c) => c.id == id, orElse: () => all.last);
   }
 }

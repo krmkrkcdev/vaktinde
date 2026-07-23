@@ -16,8 +16,8 @@ const apiBaseUrl = String.fromEnvironment(
 /// Keystore, iOS'ta Keychain. Yedeklemelere düz metin olarak sızmazlar.
 class AuthStore extends ChangeNotifier {
   AuthStore({ApiClient? api, FlutterSecureStorage? storage})
-      : api = api ?? ApiClient(baseUrl: apiBaseUrl),
-        _storage = storage ?? const FlutterSecureStorage() {
+    : api = api ?? ApiClient(baseUrl: apiBaseUrl),
+      _storage = storage ?? const FlutterSecureStorage() {
     this.api.onTokensChanged = _persist;
     this.api.onSessionExpired = () {
       // Yenileme tokeni de geçersizse kullanıcı düşürülür.
@@ -67,7 +67,10 @@ class AuthStore extends ChangeNotifier {
   Future<void> signIn(String email, String password) =>
       _authenticate(email, () => api.login(email, password));
 
-  Future<void> _authenticate(String email, Future<void> Function() action) async {
+  Future<void> _authenticate(
+    String email,
+    Future<void> Function() action,
+  ) async {
     _busy = true;
     notifyListeners();
     try {

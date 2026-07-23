@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/settings_store.dart';
+import '../theme/app_theme.dart';
 
 /// Premium tanıtım ekranı.
 ///
@@ -113,6 +114,7 @@ class PremiumScreen extends StatelessWidget {
     // doğrulandıktan sonra context.read<SettingsStore>().setPremium(true).
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
+        duration: kSnackDuration,
         content: Text('Satın alma yakında: mağaza entegrasyonu hazırlanıyor.'),
       ),
     );
@@ -121,7 +123,10 @@ class PremiumScreen extends StatelessWidget {
   void _restore(BuildContext context) {
     // TODO(iap): in_app_purchase restorePurchases() çağrısı.
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Geri yüklenecek satın alma bulunamadı.')),
+      const SnackBar(
+        duration: kSnackDuration,
+        content: Text('Geri yüklenecek satın alma bulunamadı.'),
+      ),
     );
   }
 }

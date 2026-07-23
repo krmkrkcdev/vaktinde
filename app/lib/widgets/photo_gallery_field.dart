@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../services/photo_store.dart';
+import '../theme/app_theme.dart';
 
 /// Belge fotoğraflarını ekleme/görüntüleme/silme alanı.
 ///
@@ -84,7 +85,10 @@ class PhotoGalleryField extends StatelessWidget {
     final name = await PhotoStore.instance.captureFromCamera();
     if (name == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Fotoğraf eklenmedi.')),
+        const SnackBar(
+          duration: kSnackDuration,
+          content: Text('Fotoğraf eklenmedi.'),
+        ),
       );
       return;
     }
@@ -96,7 +100,10 @@ class PhotoGalleryField extends StatelessWidget {
     final names = await PhotoStore.instance.pickFromGallery();
     if (names.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Fotoğraf eklenmedi.')),
+        const SnackBar(
+          duration: kSnackDuration,
+          content: Text('Fotoğraf eklenmedi.'),
+        ),
       );
       return;
     }

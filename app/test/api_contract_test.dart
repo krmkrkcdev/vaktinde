@@ -25,7 +25,11 @@ const _baseUrl = String.fromEnvironment('CONTRACT_API_URL');
 
 void main() {
   if (_baseUrl.isEmpty) {
-    test('sözleşme testleri atlandı (CONTRACT_API_URL tanımlı değil)', () {}, skip: true);
+    test(
+      'sözleşme testleri atlandı (CONTRACT_API_URL tanımlı değil)',
+      () {},
+      skip: true,
+    );
     return;
   }
 
@@ -61,7 +65,8 @@ void main() {
     expect(pushResult['rejected_ids'], isEmpty);
 
     final changes = await api.fetchChanges(0);
-    final donenler = (changes['reminders'] as List).cast<Map<String, Object?>>();
+    final donenler = (changes['reminders'] as List)
+        .cast<Map<String, Object?>>();
     expect(donenler, hasLength(1));
 
     final donen = Reminder.fromApi(donenler.first);
@@ -103,20 +108,26 @@ void main() {
 
     // Geçmiş zamanlı düzenleme yok sayılmalı.
     final eski = ilk.copyWith(title: 'Eski hâli').toApi()
-      ..['client_updated_at'] =
-          ilk.updatedAt.subtract(const Duration(hours: 1)).toUtc().toIso8601String();
+      ..['client_updated_at'] = ilk.updatedAt
+          .subtract(const Duration(hours: 1))
+          .toUtc()
+          .toIso8601String();
     final redSonucu = await api.push([eski]);
     expect(redSonucu['rejected_ids'], [ilk.uuid]);
 
     // Daha yeni düzenleme kabul edilmeli.
     final yeni = ilk.copyWith(title: 'Yeni hâli').toApi()
-      ..['client_updated_at'] =
-          ilk.updatedAt.add(const Duration(hours: 1)).toUtc().toIso8601String();
+      ..['client_updated_at'] = ilk.updatedAt
+          .add(const Duration(hours: 1))
+          .toUtc()
+          .toIso8601String();
     final kabulSonucu = await api.push([yeni]);
     expect(kabulSonucu['rejected_ids'], isEmpty);
 
     final changes = await api.fetchChanges(0);
-    final donen = (changes['reminders'] as List).cast<Map<String, Object?>>().first;
+    final donen = (changes['reminders'] as List)
+        .cast<Map<String, Object?>>()
+        .first;
     expect(donen['title'], 'Yeni hâli');
   });
 
@@ -126,7 +137,9 @@ void main() {
     await api.push([reminder.copyWith(isDeleted: true).toApi()]);
 
     final changes = await api.fetchChanges(0);
-    final donen = (changes['reminders'] as List).cast<Map<String, Object?>>().first;
+    final donen = (changes['reminders'] as List)
+        .cast<Map<String, Object?>>()
+        .first;
     expect(Reminder.fromApi(donen).isDeleted, isTrue);
   });
 
@@ -163,7 +176,13 @@ void main() {
     final temiz = ApiClient(baseUrl: _baseUrl);
     expect(
       () => temiz.login(email, 'YanlisSifre'),
-      throwsA(isA<ApiException>().having((e) => e.isUnauthorized, 'isUnauthorized', true)),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.isUnauthorized,
+          'isUnauthorized',
+          true,
+        ),
+      ),
     );
   });
 
@@ -174,11 +193,11 @@ void main() {
 }
 
 Reminder _ornek(String title) => Reminder.create(
-      categoryId: 'bill',
-      title: title,
-      dueDate: DateTime(2026, 9, 15),
-      leadDays: const [7, 1],
-      notifyHour: 9,
-      notifyMinute: 0,
-      repeat: RepeatInterval.none,
-    );
+  categoryId: 'bill',
+  title: title,
+  dueDate: DateTime(2026, 9, 15),
+  leadDays: const [7, 1],
+  notifyHour: 9,
+  notifyMinute: 0,
+  repeat: RepeatInterval.none,
+);

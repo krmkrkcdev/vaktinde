@@ -14,8 +14,8 @@ import 'reminder_store.dart';
 /// yeniden denenir.
 class SyncController extends ChangeNotifier {
   SyncController({required AuthStore auth})
-      : _auth = auth,
-        _sync = SyncService(api: auth.api) {
+    : _auth = auth,
+      _sync = SyncService(api: auth.api) {
     _auth.addListener(_onAuthChanged);
   }
 

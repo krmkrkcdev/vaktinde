@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../models/payment_totals.dart';
 import '../models/reminder.dart';
 import '../models/repeat_interval.dart';
 import '../state/reminder_store.dart';
@@ -10,6 +12,7 @@ import 'premium_screen.dart';
 import 'reminder_form_screen.dart';
 import 'reminder_wizard_screen.dart';
 import 'settings_screen.dart';
+import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -124,6 +127,8 @@ class _Body extends StatelessWidget {
             const SizedBox(height: 10),
           ],
         ],
+        const SizedBox(height: 8),
+        _TotalsCard(reminders: reminders),
       ],
     );
   }
@@ -140,8 +145,8 @@ class _Body extends StatelessWidget {
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
       SnackBar(
+        duration: kSnackDuration,
         content: Text(message),
-        duration: const Duration(seconds: 6),
         action: SnackBarAction(
           label: 'Geri al',
           onPressed: () => store.undoCompleted(previous),
@@ -292,6 +297,109 @@ class _EmptyState extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Tekrar eden ödemelerin haftalık / aylık / yıllık toplamı.
+///
+/// Liste sonunda durur: ana iş hatırlatmaları görmek, özet ikincil bilgidir.
+class _TotalsCard extends StatelessWidget {
+  const _TotalsCard({required this.reminders});
+
+  final List<Reminder> reminders;
+
+  @override
+  Widget build(BuildContext context) {
+    final totals = PaymentTotals.from(reminders);
+    if (totals.isEmpty) return const SizedBox.shrink();
+
+    final scheme = Theme.of(context).colorScheme;
+    final money = NumberFormat.currency(
+      locale: 'tr_TR',
+      symbol: '₺',
+      decimalDigits: 0,
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 20,
+                color: scheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Düzenli ödemelerim',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _TotalColumn(
+                label: 'Haftalık',
+                value: money.format(totals.weekly),
+              ),
+              _TotalColumn(label: 'Aylık', value: money.format(totals.monthly)),
+              _TotalColumn(label: 'Yıllık', value: money.format(totals.yearly)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${totals.countedReminders} tekrar eden ödeme hesaba katıldı. '
+            'Tek seferlik kayıtlar dahil değildir.',
+            style: TextStyle(fontSize: 12, color: scheme.outline, height: 1.35),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TotalColumn extends StatelessWidget {
+  const _TotalColumn({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
     );
   }

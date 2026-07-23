@@ -78,8 +78,10 @@ class ReminderCard extends StatelessWidget {
                           filled: true,
                         ),
                         _Pill(
-                          label: DateFormat('d MMM yyyy', 'tr_TR')
-                              .format(reminder.dueDate),
+                          label: DateFormat(
+                            'd MMM yyyy',
+                            'tr_TR',
+                          ).format(reminder.dueDate),
                           color: scheme.onSurfaceVariant,
                         ),
                         if (reminder.amount != null)
@@ -90,6 +92,20 @@ class ReminderCard extends StatelessWidget {
                               decimalDigits: 0,
                             ).format(reminder.amount),
                             color: scheme.onSurfaceVariant,
+                          ),
+                        _Pill(
+                          label: TimeOfDay(
+                            hour: reminder.notifyHour,
+                            minute: reminder.notifyMinute,
+                          ).format(context),
+                          color: scheme.onSurfaceVariant,
+                          icon: Icons.schedule_outlined,
+                        ),
+                        if (reminder.nagIntervalHours != null)
+                          _Pill(
+                            label: '${reminder.nagIntervalHours}s tekrar',
+                            color: scheme.onSurfaceVariant,
+                            icon: Icons.replay,
                           ),
                         if (reminder.repeat != RepeatInterval.none)
                           _Pill(

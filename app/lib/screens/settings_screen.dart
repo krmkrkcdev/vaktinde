@@ -9,9 +9,11 @@ import '../state/auth_store.dart';
 import '../state/reminder_store.dart';
 import '../state/settings_store.dart';
 import '../state/sync_controller.dart';
+import '../widgets/nag_interval_selector.dart';
 import 'archive_screen.dart';
 import 'auth_screen.dart';
 import 'premium_screen.dart';
+import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -72,6 +74,16 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.replay),
+            title: const Text('Tamamlanmazsa tekrar hatırlat'),
+            subtitle: const Text('Yeni hatırlatmalar için varsayılan'),
+            trailing: Text(
+              NagIntervalSelector.labelFor(settings.defaultNagIntervalHours),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            onTap: () => _pickNagInterval(context, settings),
+          ),
+          ListTile(
             leading: const Icon(Icons.notifications_active_outlined),
             title: const Text('Bildirim izinlerini kontrol et'),
             subtitle: const Text('Bildirim gelmiyorsa buradan izin verin'),
@@ -124,11 +136,45 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  /// Varsayılan tekrar aralığını seçtirir.
+  Future<void> _pickNagInterval(
+    BuildContext context,
+    SettingsStore settings,
+  ) async {
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Tamamlanmazsa tekrar hatırlat',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
+            ),
+            for (final option in SettingsStore.nagIntervalOptions)
+              ListTile(
+                title: Text(NagIntervalSelector.labelFor(option)),
+                trailing: settings.defaultNagIntervalHours == option
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(option),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) await settings.setDefaultNagIntervalHours(picked);
+  }
+
   Future<void> _checkPermissions(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
     final granted = await NotificationService.instance.requestPermissions();
     messenger.showSnackBar(
       SnackBar(
+        duration: kSnackDuration,
         content: Text(
           granted
               ? 'Bildirim izni verildi.'
@@ -144,7 +190,10 @@ class SettingsScreen extends StatelessWidget {
     await NotificationService.instance.rescheduleAll(store.active);
     final pending = await NotificationService.instance.pending();
     messenger.showSnackBar(
-      SnackBar(content: Text('${pending.length} bildirim planlandı.')),
+      SnackBar(
+        duration: kSnackDuration,
+        content: Text('${pending.length} bildirim planlandı.'),
+      ),
     );
   }
 
@@ -178,7 +227,10 @@ class SettingsScreen extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     await store.deleteAll();
     messenger.showSnackBar(
-      const SnackBar(content: Text('Tüm veriler silindi.')),
+      const SnackBar(
+        duration: kSnackDuration,
+        content: Text('Tüm veriler silindi.'),
+      ),
     );
   }
 }
@@ -258,6 +310,7 @@ class _AccountSection extends StatelessWidget {
     final result = await context.read<SyncController>().sync();
     messenger.showSnackBar(
       SnackBar(
+        duration: kSnackDuration,
         content: Text(switch (result) {
           SyncState.idle => 'Yedekleme tamamlandı.',
           SyncState.offline => 'İnternet bağlantısı yok.',

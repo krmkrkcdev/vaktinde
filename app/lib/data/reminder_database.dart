@@ -15,7 +15,8 @@ class ReminderDatabase {
   /// v2: belge fotoğrafları için `photo_paths` sütunu eklendi.
   /// v3: bulut senkronizasyonu için `uuid`, `updated_at`, `is_deleted`,
   ///     `is_dirty` sütunları eklendi.
-  static const _dbVersion = 3;
+  /// v4: tamamlanmayan hatırlatmanın tekrarı için `nag_interval_hours`.
+  static const _dbVersion = 4;
   static const _table = 'reminders';
 
   Database? _db;
@@ -44,6 +45,7 @@ class ReminderDatabase {
             lead_days TEXT NOT NULL,
             notify_hour INTEGER NOT NULL DEFAULT 9,
             notify_minute INTEGER NOT NULL DEFAULT 0,
+            nag_interval_hours INTEGER,
             repeat_interval TEXT NOT NULL DEFAULT 'none',
             is_archived INTEGER NOT NULL DEFAULT 0,
             amount REAL,
@@ -64,7 +66,9 @@ class ReminderDatabase {
         if (oldVersion < 3) {
           // SQLite'ta UNIQUE kısıtlı sütun ALTER ile eklenemez; sütun önce
           // sade olarak eklenir, doldurulur, sonra benzersiz indeks kurulur.
-          await db.execute("ALTER TABLE $_table ADD COLUMN uuid TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+            "ALTER TABLE $_table ADD COLUMN uuid TEXT NOT NULL DEFAULT ''",
+          );
           await db.execute(
             'ALTER TABLE $_table ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0',
           );
@@ -91,6 +95,13 @@ class ReminderDatabase {
 
           await db.execute(
             'CREATE UNIQUE INDEX idx_reminders_uuid ON $_table (uuid)',
+          );
+        }
+        if (oldVersion < 4) {
+          // Nullable: null = tekrar hatırlatma kapalı. Mevcut kayıtların
+          // davranışı değişmez.
+          await db.execute(
+            'ALTER TABLE $_table ADD COLUMN nag_interval_hours INTEGER',
           );
         }
       },

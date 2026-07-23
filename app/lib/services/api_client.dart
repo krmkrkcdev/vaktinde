@@ -31,10 +31,8 @@ class NetworkUnavailableException implements Exception {
 /// Token yenilemeyi kendisi yapar: bir istek 401 dönerse yenileme tokeni ile
 /// bir kez yeniler ve isteği tekrarlar.
 class ApiClient {
-  ApiClient({
-    required this.baseUrl,
-    http.Client? httpClient,
-  }) : _http = httpClient ?? http.Client();
+  ApiClient({required this.baseUrl, http.Client? httpClient})
+    : _http = httpClient ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
@@ -64,9 +62,9 @@ class ApiClient {
       Uri.parse('$baseUrl$path').replace(queryParameters: query);
 
   Map<String, String> _headers({bool json = true}) => {
-        if (json) 'Content-Type': 'application/json',
-        if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      };
+    if (json) 'Content-Type': 'application/json',
+    if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+  };
 
   // ------------------------------------------------------------------ auth
 
@@ -110,18 +108,23 @@ class ApiClient {
 
   Future<Map<String, Object?>> fetchChanges(int since) async {
     return await _send(
-      (h) => _http.get(_uri('/sync/changes', {'since': '$since'}), headers: h),
-    ) as Map<String, Object?>;
+          (h) =>
+              _http.get(_uri('/sync/changes', {'since': '$since'}), headers: h),
+        )
+        as Map<String, Object?>;
   }
 
-  Future<Map<String, Object?>> push(List<Map<String, Object?>> reminders) async {
+  Future<Map<String, Object?>> push(
+    List<Map<String, Object?>> reminders,
+  ) async {
     return await _send(
-      (h) => _http.post(
-        _uri('/sync/push'),
-        headers: h,
-        body: jsonEncode({'reminders': reminders}),
-      ),
-    ) as Map<String, Object?>;
+          (h) => _http.post(
+            _uri('/sync/push'),
+            headers: h,
+            body: jsonEncode({'reminders': reminders}),
+          ),
+        )
+        as Map<String, Object?>;
   }
 
   // ---------------------------------------------------------------- photos
@@ -132,12 +135,13 @@ class ApiClient {
     required File file,
   }) async {
     Future<http.Response> attempt(Map<String, String> headers) async {
-      final request = http.MultipartRequest(
-        'PUT',
-        _uri('/photos/$photoId', {'reminder_id': reminderId}),
-      )
-        ..headers.addAll(headers)
-        ..files.add(await http.MultipartFile.fromPath('file', file.path));
+      final request =
+          http.MultipartRequest(
+              'PUT',
+              _uri('/photos/$photoId', {'reminder_id': reminderId}),
+            )
+            ..headers.addAll(headers)
+            ..files.add(await http.MultipartFile.fromPath('file', file.path));
       return http.Response.fromStream(await _http.send(request));
     }
 
@@ -145,7 +149,9 @@ class ApiClient {
   }
 
   Future<List<int>> downloadPhoto(String photoId) async {
-    final response = await _sendRaw((h) => _http.get(_uri('/photos/$photoId'), headers: h));
+    final response = await _sendRaw(
+      (h) => _http.get(_uri('/photos/$photoId'), headers: h),
+    );
     return response.bodyBytes;
   }
 
@@ -160,7 +166,11 @@ class ApiClient {
     bool authenticated = true,
     bool json = true,
   }) async {
-    final response = await _sendRaw(request, authenticated: authenticated, json: json);
+    final response = await _sendRaw(
+      request,
+      authenticated: authenticated,
+      json: json,
+    );
     if (response.body.isEmpty) return null;
     return jsonDecode(utf8.decode(response.bodyBytes));
   }
@@ -216,7 +226,8 @@ class ApiClient {
   static String _errorMessage(http.Response response) {
     try {
       final body = jsonDecode(utf8.decode(response.bodyBytes));
-      if (body is Map && body['detail'] is String) return body['detail'] as String;
+      if (body is Map && body['detail'] is String)
+        return body['detail'] as String;
       if (body is Map && body['detail'] is List) {
         // Pydantic doğrulama hatası.
         return 'Girilen bilgiler geçersiz';

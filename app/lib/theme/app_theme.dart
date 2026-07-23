@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 
+/// Bildirim şeritlerinin (SnackBar) ekranda kalma süresi.
+///
+/// Flutter'ın varsayılanı 4 saniye ve tek yerden ayarlanamıyor
+/// (SnackBarThemeData süre içermez), bu yüzden sabit burada tutulur ve
+/// her SnackBar'a verilir.
+const kSnackDuration = Duration(seconds: 2);
+
 class AppTheme {
   AppTheme._();
 
@@ -34,9 +41,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         color: brightness == Brightness.light
             ? Colors.white
             : scheme.surfaceContainerHigh,
@@ -73,9 +78,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

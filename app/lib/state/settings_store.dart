@@ -11,19 +11,28 @@ class SettingsStore extends ChangeNotifier {
   static const _keyNotifyHour = 'default_notify_hour';
   static const _keyNotifyMinute = 'default_notify_minute';
   static const _keyOnboarded = 'has_onboarded';
+  static const _keyNagInterval = 'default_nag_interval_hours';
 
   /// Ücretsiz sürümdeki aktif hatırlatma üst sınırı.
   static const freeReminderLimit = 10;
+
+  /// Tekrar hatırlatma için sunulan aralıklar (saat). 0 = kapalı.
+  static const nagIntervalOptions = [0, 1, 2, 3, 6];
 
   SharedPreferences? _prefs;
 
   bool _isPremium = false;
   bool _hasOnboarded = false;
   TimeOfDay _defaultNotifyTime = const TimeOfDay(hour: 9, minute: 0);
+  int _defaultNagIntervalHours = 0;
 
   bool get isPremium => _isPremium;
   bool get hasOnboarded => _hasOnboarded;
   TimeOfDay get defaultNotifyTime => _defaultNotifyTime;
+
+  /// Yeni hatırlatmalarda kullanılacak tekrar aralığı (saat). 0 = kapalı,
+  /// yani tamamlanmasa bile tek bildirim gönderilir.
+  int get defaultNagIntervalHours => _defaultNagIntervalHours;
 
   Future<void> load() async {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
@@ -33,6 +42,7 @@ class SettingsStore extends ChangeNotifier {
       hour: prefs.getInt(_keyNotifyHour) ?? 9,
       minute: prefs.getInt(_keyNotifyMinute) ?? 0,
     );
+    _defaultNagIntervalHours = prefs.getInt(_keyNagInterval) ?? 0;
     notifyListeners();
   }
 
@@ -47,6 +57,12 @@ class SettingsStore extends ChangeNotifier {
     _defaultNotifyTime = time;
     await _prefs?.setInt(_keyNotifyHour, time.hour);
     await _prefs?.setInt(_keyNotifyMinute, time.minute);
+    notifyListeners();
+  }
+
+  Future<void> setDefaultNagIntervalHours(int hours) async {
+    _defaultNagIntervalHours = hours;
+    await _prefs?.setInt(_keyNagInterval, hours);
     notifyListeners();
   }
 

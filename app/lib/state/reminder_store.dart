@@ -19,10 +19,10 @@ class ReminderStore extends ChangeNotifier {
     ReminderDatabase? database,
     NotificationService? notifications,
     PhotoStore? photos,
-  })  : _settings = settings,
-        _db = database ?? ReminderDatabase.instance,
-        _notifications = notifications ?? NotificationService.instance,
-        _photos = photos ?? PhotoStore.instance;
+  }) : _settings = settings,
+       _db = database ?? ReminderDatabase.instance,
+       _notifications = notifications ?? NotificationService.instance,
+       _photos = photos ?? PhotoStore.instance;
 
   final SettingsStore _settings;
   final ReminderDatabase _db;
@@ -74,8 +74,9 @@ class ReminderStore extends ChangeNotifier {
     await _photos.pruneOrphans(_referencedPhotos);
   }
 
-  Set<String> get _referencedPhotos =>
-      {for (final r in _reminders) ...r.photoPaths};
+  Set<String> get _referencedPhotos => {
+    for (final r in _reminders) ...r.photoPaths,
+  };
 
   Future<Reminder> add(Reminder reminder) async {
     if (!canAddReminder) {

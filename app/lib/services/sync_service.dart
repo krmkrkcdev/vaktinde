@@ -21,8 +21,8 @@ class SyncService {
     required this.api,
     ReminderDatabase? database,
     PhotoStore? photos,
-  })  : _db = database ?? ReminderDatabase.instance,
-        _photos = photos ?? PhotoStore.instance;
+  }) : _db = database ?? ReminderDatabase.instance,
+       _photos = photos ?? PhotoStore.instance;
 
   static const _keyCursor = 'sync_cursor';
 
@@ -38,9 +38,7 @@ class SyncService {
   /// çıkarıldığında sunucunun beklediği kimlik elde edilir. Ayrı bir eşleme
   /// tablosu tutmaya gerek kalmaz.
   static String? photoIdFromFileName(String fileName) {
-    final match = RegExp(
-      r'^belge_([0-9a-fA-F-]{36})\.',
-    ).firstMatch(fileName);
+    final match = RegExp(r'^belge_([0-9a-fA-F-]{36})\.').firstMatch(fileName);
     return match?.group(1);
   }
 
@@ -105,7 +103,8 @@ class SyncService {
     while (hasMore) {
       final response = await api.fetchChanges(cursor);
 
-      for (final json in (response['reminders'] as List).cast<Map<String, Object?>>()) {
+      for (final json
+          in (response['reminders'] as List).cast<Map<String, Object?>>()) {
         await _db.upsertFromServer(Reminder.fromApi(json));
       }
 
