@@ -19,10 +19,30 @@ Bunlar otomasyona başlamadan önce **bir kez** elle yapılması gereken işleml
 2. App Store Connect'te uygulama kaydı açmak (isim, SKU, bundle id seçimi)
 3. Google Play Console'da uygulama oluşturmak ve ilk mağaza girişini
    (açıklama, ekran görüntüleri, gizlilik politikası vb.) tamamlamak
-4. Apple/Google'ın yaptığı inceleme sürecinin kendisi (bu süre otomatikleştirilemez,
+4. **Apple Distribution sertifikası** oluşturmak: Xcode → Settings → Accounts →
+   Manage Certificates → `+` → Apple Distribution. Bu sertifika olmadan arşiv
+   geliştirme kimliğiyle imzalanır ve paketleme
+   "no provisioning profile mapping was provided" ile durur — hata sebebi
+   söylemediği için teşhisi zordur.
+5. Apple/Google'ın yaptığı inceleme sürecinin kendisi (bu süre otomatikleştirilemez,
    sadece yükleme ve incelemeye gönderme otomatikleştirilir)
 
 Bunlardan sonra tüm sonraki güncellemeler bu araçla otomatikleştirilebilir.
+
+### Dikey yöne kilitlenmiş uygulamalar
+
+Uygulama yalnızca dikey çalışıyorsa ve iPad'i de hedefliyorsa
+(`TARGETED_DEVICE_FAMILY = "1,2"`), `Info.plist` içine şu anahtar gerekir:
+
+```xml
+<key>UIRequiresFullScreen</key>
+<true/>
+```
+
+iPad'de çoklu görev destekleyen uygulamalar dört yönü de beyan etmek
+zorundadır. Bu anahtar olmadan yükleme **90474** hatasıyla reddedilir — ve
+bunu ancak derleme, imzalama ve yükleme turunu tamamen harcadıktan sonra
+öğrenirsiniz.
 
 ## Ön Gereksinimler
 

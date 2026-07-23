@@ -19,3 +19,6 @@ build/
 
 # --- Fastlane'in ürettiği geçici changelog klasörü ---
 android/fastlane/metadata/
+
+# sigh/match imzalama sirasinda indirir; makineye ozeldir.
+*.mobileprovision

@@ -31,8 +31,24 @@ platform :ios do
   desc "İmzalama sertifikalarını match ile hazırla"
   private_lane :prepare_signing do
     unless match_enabled
-      UI.important("match kurulu değil (MATCH_GIT_URL boş) — Xcode otomatik imzalaması kullanılacak.")
-      UI.important("Kurulum için README'deki 'fastlane match kurulumu' bölümüne bakın.")
+      UI.important("match kurulu değil (MATCH_GIT_URL boş) — profil doğrudan")
+      UI.important("App Store Connect'ten alınacak. Bu makineye özeldir;")
+      UI.important("CI'a taşımak için README'deki match kurulumuna bakın.")
+
+      # Xcode'un otomatik imzalaması komut satırından çalışırken App Store
+      # DAĞITIM profilini kendiliğinden üretmiyor; arşivi geliştirme
+      # kimliğiyle imzalıyor ve paketleme "no provisioning profile mapping"
+      # ile düşüyor. Profili burada açıkça alıp imzalamayı ona sabitliyoruz.
+      sigh(app_identifier: APP_ID, force: true)
+
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "Runner.xcodeproj",
+        team_id: ENV.fetch("APPLE_TEAM_ID"),
+        code_sign_identity: "Apple Distribution",
+        bundle_identifier: APP_ID,
+        profile_name: lane_context[SharedValues::SIGH_NAME],
+      )
       next
     end
 
@@ -68,6 +84,13 @@ platform :ios do
         provisioningProfiles: {
           APP_ID => lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING][APP_ID]
         }
+      }
+    else
+      # prepare_signing içinde sigh ile alınan profil.
+      options[:export_options] = {
+        provisioningProfiles: {
+          APP_ID => lane_context[SharedValues::SIGH_NAME],
+        },
       }
     end
 

@@ -101,6 +101,15 @@ if [ "$PLATFORM" = "ios" ] || [ "$PLATFORM" = "all" ]; then
   require_env ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_FILEPATH APPLE_TEAM_ID APP_IDENTIFIER
   require_file "$ASC_KEY_FILEPATH" "App Store Connect API anahtarı (.p8)"
 
+  # fastlane ios/ klasörü içinden çalıştırılır (aşağıda `cd ios`), bu yüzden
+  # .env'deki proje köküne göre yazılmış göreli yol orada çözülemez.
+  # Mutlaklaştırıp export ediyoruz ki .env okunaklı kalsın.
+  case "$ASC_KEY_FILEPATH" in
+    /*) ;;
+    *) ASC_KEY_FILEPATH="$PWD/${ASC_KEY_FILEPATH#./}" ;;
+  esac
+  export ASC_KEY_FILEPATH
+
   # Bu anahtar yoksa App Store Connect her yüklemede "ihracat uyumluluğu"
   # sorusunu elle yanıtlamanızı bekler ve otomatik akış orada durur.
   if ! grep -q "ITSAppUsesNonExemptEncryption" ios/Runner/Info.plist 2>/dev/null; then
@@ -115,6 +124,13 @@ fi
 if [ "$PLATFORM" = "android" ] || [ "$PLATFORM" = "all" ]; then
   require_env GOOGLE_PLAY_JSON_KEY ANDROID_PACKAGE_NAME
   require_file "$GOOGLE_PLAY_JSON_KEY" "Google Play service account JSON"
+
+  # iOS tarafındaki ile aynı sebep: fastlane android/ içinden çalışır.
+  case "$GOOGLE_PLAY_JSON_KEY" in
+    /*) ;;
+    *) GOOGLE_PLAY_JSON_KEY="$PWD/${GOOGLE_PLAY_JSON_KEY#./}" ;;
+  esac
+  export GOOGLE_PLAY_JSON_KEY
 
   # Debug anahtarıyla imzalanmış paketi Play Console reddeder. Bunu build ve
   # yükleme turunu harcamadan önce yakalarız.
