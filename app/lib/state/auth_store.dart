@@ -7,7 +7,7 @@ import '../services/api_client.dart';
 ///   flutter build apk --dart-define=API_BASE_URL=https://...
 const apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'https://vaktinde.devpos.com',
+  defaultValue: 'https://vaktinde.devposs.com',
 );
 
 /// Oturum durumu ve token saklama.

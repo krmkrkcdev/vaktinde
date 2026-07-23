@@ -39,7 +39,7 @@ flutter build ios        # iOS (macOS gerekir)
 
 ### Sunucu adresi
 
-Varsayılan `https://vaktinde.devpos.com`. Değiştirmek için:
+Varsayılan `https://vaktinde.devposs.com`. Değiştirmek için:
 
 ```bash
 flutter build apk --dart-define=API_BASE_URL=https://baska-adres.com

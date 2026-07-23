@@ -2,7 +2,7 @@
 <!--
   Yalnızca debug derlemesi için.
 
-  Üretimde tüm trafik HTTPS'tir (vaktinde.devpos.com). Bu istisna sadece
+  Üretimde tüm trafik HTTPS'tir (vaktinde.devposs.com). Bu istisna sadece
   geliştirme sırasında emülatörün ana makinedeki API'ye (10.0.2.2) düz HTTP
   ile ulaşabilmesi içindir. Sürüm derlemesinde bu dosya bulunmaz, dolayısıyla
   Android'in varsayılan "düz metin trafiği yasak" kuralı geçerli kalır.

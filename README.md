@@ -50,11 +50,11 @@ cd backend && docker compose run --rm --no-deps -v "$PWD:/src" -w /src api \
 
 ## Yayına alma
 
-Sunucu `vaktinde.devpos.com` adresinde nginx ters vekili arkasında çalışır.
+Sunucu `vaktinde.devposs.com` adresinde nginx ters vekili arkasında çalışır.
 Hazır yapılandırma: [`backend/nginx/`](backend/nginx).
 
 Mobil uygulama sürüm derlemesinde sunucu adresi şöyle verilir:
 
 ```bash
-flutter build apk --dart-define=API_BASE_URL=https://vaktinde.devpos.com
+flutter build apk --dart-define=API_BASE_URL=https://vaktinde.devposs.com
 ```

@@ -28,12 +28,12 @@ Etkileşimli API dökümanı: `http://127.0.0.1:8000/docs`
 
 ## nginx ile yayına alma
 
-`nginx/vaktinde.devpos.com.conf` hazır bir yapılandırma içerir:
+`nginx/vaktinde.devposs.com.conf` hazır bir yapılandırma içerir:
 
 ```bash
-sudo cp nginx/vaktinde.devpos.com.conf /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/vaktinde.devpos.com.conf /etc/nginx/sites-enabled/
-sudo certbot --nginx -d vaktinde.devpos.com
+sudo cp nginx/vaktinde.devposs.com.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/vaktinde.devposs.com.conf /etc/nginx/sites-enabled/
+sudo certbot --nginx -d vaktinde.devposs.com
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
