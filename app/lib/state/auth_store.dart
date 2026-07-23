@@ -29,6 +29,14 @@ class AuthStore extends ChangeNotifier {
   static const _keyRefresh = 'auth_refresh_token';
   static const _keyEmail = 'auth_email';
 
+  /// Statik olarak premium sayılan hesaplar (geliştirici / test).
+  ///
+  /// Bu hesaplar App Store aboneliği satın almadan premium olur; premium'a
+  /// bağlı özellikleri (bulut yedekleme, sınırsız hatırlatma, reklamsız)
+  /// yayın öncesi test etmek içindir. E-postalar küçük harfle yazılmalı;
+  /// karşılaştırma normalize edilmiş [_email] ile yapılır.
+  static const _premiumEmails = {'keremkarakoc.dev@gmail.com'};
+
   final ApiClient api;
   final FlutterSecureStorage _storage;
 
@@ -41,6 +49,15 @@ class AuthStore extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isBusy => _busy;
 
+  /// Oturumdaki hesap statik premium listesinde mi?
+  bool get isPremiumAccount =>
+      _email != null && _premiumEmails.contains(_email);
+
+  /// Statik premium bir hesap giriş yaptığında ya da açılışta böyle bir oturum
+  /// bulunduğunda çağrılır; premium bayrağını açmak için [SettingsStore] buna
+  /// bağlanır.
+  void Function()? onPremiumAccountDetected;
+
   Future<void> load() async {
     try {
       final access = await _storage.read(key: _keyAccess);
@@ -52,6 +69,7 @@ class AuthStore extends ChangeNotifier {
       // başlarız; uygulama çevrimdışı olarak çalışmaya devam eder.
       debugPrint('Oturum okunamadı: $e');
     }
+    if (isPremiumAccount) onPremiumAccountDetected?.call();
     _isLoading = false;
     notifyListeners();
   }
@@ -77,6 +95,7 @@ class AuthStore extends ChangeNotifier {
       await action();
       _email = email.trim().toLowerCase();
       await _storage.write(key: _keyEmail, value: _email);
+      if (isPremiumAccount) onPremiumAccountDetected?.call();
     } finally {
       _busy = false;
       notifyListeners();

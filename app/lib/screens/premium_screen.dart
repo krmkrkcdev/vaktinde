@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../services/purchase_service.dart';
 import '../state/settings_store.dart';
+import 'auth_screen.dart';
 import '../theme/app_theme.dart';
 
 /// Premium tanıtım ekranı.
@@ -64,7 +65,7 @@ class PremiumScreen extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           const Text(
-            'Vaktinde Premium',
+            'Vakit-Nakit Premium',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
@@ -101,6 +102,14 @@ class PremiumScreen extends StatelessWidget {
             TextButton(
               onPressed: () => _restore(context),
               child: const Text('Satın alımları geri yükle'),
+            ),
+            // Statik premium hesaplar (geliştirici / test) buradan giriş yapar;
+            // giriş sonrası premium kendiliğinden açılır.
+            TextButton(
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const AuthScreen())),
+              child: const Text('Premium hesabımla giriş yap'),
             ),
           ],
           if (kDebugMode) ...[

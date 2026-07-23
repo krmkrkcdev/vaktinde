@@ -41,6 +41,8 @@ Future<void> main() async {
   await settings.load();
 
   final auth = AuthStore();
+  // Statik premium hesaplar (geliştirici / test) giriş yapınca premium olur.
+  auth.onPremiumAccountDetected = () => settings.setPremium(true);
   await auth.load();
 
   // Mağaza ve reklam SDK'ları açılışı bloklamamalı: ikisi de ağ bekler ve
