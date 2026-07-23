@@ -165,7 +165,13 @@ DART_DEFINES=()
 
 if [ ${#DART_DEFINES[@]} -gt 0 ]; then
   echo "🎯 ${#DART_DEFINES[@]} adet --dart-define uygulanacak."
+else
+  echo "ℹ️  --dart-define verilmedi; kod içindeki varsayılanlar kullanılacak."
 fi
+
+# Not: aşağıda diziyi ${DART_DEFINES[@]+"..."} biçiminde genişletiyoruz.
+# macOS'un bash 3.2'sinde `set -u` altında BOŞ bir dizinin doğrudan
+# "${arr[@]}" ile genişletilmesi "unbound variable" hatası verir.
 
 # Mağaza hazırlık denetimi. forge kurulu değilse sessizce atlanır — bu betik
 # forge'a bağımlı olmamalı. Engel bulunursa yayın başlamadan durur; amaç tam
@@ -284,7 +290,7 @@ deploy_ios() {
   echo "🍎 iOS: Dart derleniyor ve Xcode yapılandırması üretiliyor..."
   # Bu adım Generated.xcconfig'i (CURRENT_PROJECT_VERSION dahil) pubspec'e göre yazar.
   # İmzalama fastlane'e (gym) bırakılır.
-  flutter build ios --release --no-codesign "${DART_DEFINES[@]}"
+  flutter build ios --release --no-codesign ${DART_DEFINES[@]+"${DART_DEFINES[@]}"}
 
   echo "🍎 iOS: Fastlane ile arşivleniyor ve yükleniyor (lane: $LANE)..."
   # clean: false — flutter build çıktısını yeniden derlememek için (bkz. ios/fastlane/Fastfile)
@@ -294,7 +300,7 @@ deploy_ios() {
 deploy_android() {
   echo ""
   echo "🤖 Android: App Bundle build alınıyor..."
-  flutter build appbundle --release "${DART_DEFINES[@]}"
+  flutter build appbundle --release ${DART_DEFINES[@]+"${DART_DEFINES[@]}"}
 
   echo "🤖 Android: Fastlane ile Play Store'a yükleniyor (lane: $LANE)..."
   (cd android && bundle exec fastlane "$LANE")
