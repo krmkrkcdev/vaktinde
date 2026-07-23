@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -5,12 +7,25 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/home_screen.dart';
+import 'services/ad_service.dart';
 import 'services/notification_service.dart';
+import 'services/purchase_service.dart';
 import 'state/auth_store.dart';
 import 'state/reminder_store.dart';
 import 'state/settings_store.dart';
 import 'state/sync_controller.dart';
 import 'theme/app_theme.dart';
+
+/// Reklam ve satın alma altyapısını arka planda hazırlar.
+///
+/// Satın alma durumu mağazadan gelince premium bayrağı güncellenir; böylece
+/// cihaz değiştiren ya da aboneliği yenilenen kullanıcı ek bir işlem yapmadan
+/// premium'a kavuşur.
+Future<void> _initMonetization(SettingsStore settings) async {
+  PurchaseService.instance.onPremiumChanged = settings.setPremium;
+  await PurchaseService.instance.init();
+  await AdService.instance.init();
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +42,10 @@ Future<void> main() async {
 
   final auth = AuthStore();
   await auth.load();
+
+  // Mağaza ve reklam SDK'ları açılışı bloklamamalı: ikisi de ağ bekler ve
+  // hata verse bile uygulama tam olarak çalışmaya devam eder.
+  unawaited(_initMonetization(settings));
 
   runApp(VaktindeApp(settings: settings, auth: auth));
 }

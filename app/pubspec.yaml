@@ -5,7 +5,7 @@ publish_to: 'none'
 # Biçim: <sürüm adı>+<build numarası>
 # Build numarası deploy.sh tarafından her yayında otomatik artırılır ve hem
 # iOS (CURRENT_PROJECT_VERSION) hem Android (versionCode) için tek kaynaktır.
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ^3.10.4
@@ -19,8 +19,10 @@ dependencies:
     sdk: flutter
   flutter_secure_storage: ^10.3.1
   flutter_timezone: ^5.1.0
+  google_mobile_ads: ^9.0.0
   http: ^1.6.0
   image_picker: ^1.2.3
+  in_app_purchase: ^3.3.0
   intl: ^0.20.2
   path: ^1.9.1
   path_provider: ^2.1.6

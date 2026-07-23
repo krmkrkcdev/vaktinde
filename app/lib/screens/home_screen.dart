@@ -7,6 +7,8 @@ import '../models/reminder.dart';
 import '../models/repeat_interval.dart';
 import '../state/reminder_store.dart';
 import '../state/settings_store.dart';
+import '../services/ad_service.dart';
+import '../widgets/banner_ad_slot.dart';
 import '../widgets/reminder_card.dart';
 import 'premium_screen.dart';
 import 'reminder_form_screen.dart';
@@ -129,6 +131,7 @@ class _Body extends StatelessWidget {
         ],
         const SizedBox(height: 8),
         _TotalsCard(reminders: reminders),
+        const BannerAdSlot(),
       ],
     );
   }
@@ -136,6 +139,7 @@ class _Body extends StatelessWidget {
   Future<void> _complete(BuildContext context, Reminder reminder) async {
     final store = context.read<ReminderStore>();
     final messenger = ScaffoldMessenger.of(context);
+    final isPremium = context.read<SettingsStore>().isPremium;
     final previous = await store.markCompleted(reminder);
 
     final message = reminder.repeat == RepeatInterval.none
@@ -153,6 +157,10 @@ class _Body extends StatelessWidget {
         ),
       ),
     );
+
+    // Reklam en son gösterilir: kullanıcı önce işini bitirmiş ve geri alma
+    // seçeneğini görmüş olur. Sıklık sınırı AdService içinde.
+    await AdService.instance.onReminderCompleted(isPremium: isPremium);
   }
 
   static List<_Group> _groupByUrgency(List<Reminder> reminders) {

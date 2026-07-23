@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../services/purchase_service.dart';
 import '../state/settings_store.dart';
 import '../theme/app_theme.dart';
 
@@ -13,11 +14,12 @@ import '../theme/app_theme.dart';
 class PremiumScreen extends StatelessWidget {
   const PremiumScreen({super.key});
 
-  static const _benefits = [
+  static List<(IconData, String, String)> get _benefits => [
     (
       Icons.all_inclusive,
       'Sınırsız hatırlatma',
-      'Ücretsiz sürümdeki 10 kayıt sınırı kalkar.',
+      'Ücretsiz sürümdeki ${SettingsStore.freeReminderLimit} kayıt sınırı '
+          'kalkar.',
     ),
     (
       Icons.cloud_upload_outlined,
@@ -67,7 +69,8 @@ class PremiumScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tek seferlik ödeme. Abonelik yok, yenileme yok.',
+            'Yıllık abonelik. İstediğiniz zaman iptal edebilirsiniz; '
+            'iptal etmezseniz dönem sonunda otomatik yenilenir.',
             style: TextStyle(fontSize: 15, color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
@@ -87,7 +90,12 @@ class PremiumScreen extends StatelessWidget {
           else ...[
             FilledButton(
               onPressed: () => _buy(context),
-              child: const Text('Premium\'a geç'),
+              child: Text(
+                PurchaseService.instance.yearlyProduct == null
+                    ? 'Premium\'a geç'
+                    : 'Premium\'a geç — '
+                          '${PurchaseService.instance.yearlyProduct!.price} / yıl',
+              ),
             ),
             const SizedBox(height: 8),
             TextButton(
@@ -109,23 +117,40 @@ class PremiumScreen extends StatelessWidget {
     );
   }
 
-  void _buy(BuildContext context) {
-    // TODO(iap): in_app_purchase ile tek seferlik ürünü satın al, satın alma
-    // doğrulandıktan sonra context.read<SettingsStore>().setPremium(true).
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        duration: kSnackDuration,
-        content: Text('Satın alma yakında: mağaza entegrasyonu hazırlanıyor.'),
-      ),
-    );
+  Future<void> _buy(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final service = PurchaseService.instance;
+
+    if (service.yearlyProduct == null) {
+      messenger.showSnackBar(
+        const SnackBar(
+          duration: kSnackDuration,
+          content: Text('Mağaza şu an ulaşılamıyor, lütfen sonra deneyin.'),
+        ),
+      );
+      return;
+    }
+
+    final started = await service.buyYearly();
+    if (!started) {
+      messenger.showSnackBar(
+        const SnackBar(
+          duration: kSnackDuration,
+          content: Text('Satın alma başlatılamadı.'),
+        ),
+      );
+    }
+    // Başarı durumu mağaza akışından gelir; PurchaseService premium'u
+    // kendisi işaretler.
   }
 
-  void _restore(BuildContext context) {
-    // TODO(iap): in_app_purchase restorePurchases() çağrısı.
-    ScaffoldMessenger.of(context).showSnackBar(
+  Future<void> _restore(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await PurchaseService.instance.restore();
+    messenger.showSnackBar(
       const SnackBar(
         duration: kSnackDuration,
-        content: Text('Geri yüklenecek satın alma bulunamadı.'),
+        content: Text('Satın alımlarınız kontrol ediliyor…'),
       ),
     );
   }

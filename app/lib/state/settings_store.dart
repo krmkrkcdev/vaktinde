@@ -14,7 +14,7 @@ class SettingsStore extends ChangeNotifier {
   static const _keyNagInterval = 'default_nag_interval_hours';
 
   /// Ücretsiz sürümdeki aktif hatırlatma üst sınırı.
-  static const freeReminderLimit = 10;
+  static const freeReminderLimit = 20;
 
   /// Tekrar hatırlatma için sunulan aralıklar (saat). 0 = kapalı.
   static const nagIntervalOptions = [0, 1, 2, 3, 6];

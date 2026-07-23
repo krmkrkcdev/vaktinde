@@ -1,64 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-	<dict>
-		<key>NSCameraUsageDescription</key>
-		<string>Fatura ve garanti belgelerinizin fotoğrafını çekebilmek için kamera erişimi gerekiyor. Fotoğraflar yalnızca telefonunuzda saklanır.</string>
-		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Fatura ve garanti belgelerinizin fotoğraflarını ekleyebilmek için galeri erişimi gerekiyor. Fotoğraflar yalnızca telefonunuzda saklanır.</string>
-		<key>CFBundleDevelopmentRegion</key>
-		<string>$(DEVELOPMENT_LANGUAGE)</string>
-		<key>CFBundleDisplayName</key>
-		<string>Vaktinde</string>
-		<key>CFBundleExecutable</key>
-		<string>$(EXECUTABLE_NAME)</string>
-		<key>CFBundleIdentifier</key>
-		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-		<key>CFBundleInfoDictionaryVersion</key>
-		<string>6.0</string>
-		<key>CFBundleName</key>
-		<string>Vaktinde</string>
-		<key>CFBundlePackageType</key>
-		<string>APPL</string>
-		<key>CFBundleShortVersionString</key>
-		<string>$(FLUTTER_BUILD_NAME)</string>
-		<key>CFBundleSignature</key>
-		<string>????</string>
-		<key>CFBundleVersion</key>
-		<string>$(FLUTTER_BUILD_NUMBER)</string>
-		<key>LSRequiresIPhoneOS</key>
-		<true/>
-		<key>UILaunchStoryboardName</key>
-		<string>LaunchScreen</string>
-		<key>UIMainStoryboardFile</key>
-		<string>Main</string>
-		<key>UISupportedInterfaceOrientations</key>
-		<array>
-			<string>UIInterfaceOrientationPortrait</string>
-		</array>
-		<key>UISupportedInterfaceOrientations~ipad</key>
-		<array>
-			<string>UIInterfaceOrientationPortrait</string>
-			<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		</array>
-		<!-- iPad'de çoklu görev (Split View / Slide Over) kapalı. Çoklu görevi
-		     destekleyen uygulamalar dört yönü de beyan etmek zorundadır; bu
-		     uygulama yalnızca dikey düzen için tasarlandığı ve yatay düzeni
-		     olmadığı için tam ekran çalışır. Bu anahtar olmadan App Store
-		     Connect yüklemeyi 90474 hatasıyla reddeder. -->
-		<key>UIRequiresFullScreen</key>
-		<true/>
-		<key>CADisableMinimumFrameDurationOnPhone</key>
-		<true/>
-		<key>UIApplicationSupportsIndirectInputEvents</key>
-		<true/>
-		<key>UIStatusBarHidden</key>
-		<false/>
-		<!-- Uygulama yalnızca standart HTTPS/TLS kullanır, özel şifreleme
-		     içermez. Bu anahtar olmadan App Store Connect her yüklemede
-		     "ihracat uyumluluğu" sorusunu elle yanıtlamanızı bekler ve
-		     otomatik yayın akışı orada durur. -->
-		<key>ITSAppUsesNonExemptEncryption</key>
-		<false/>
-	</dict>
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Vaktinde</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Vaktinde</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<!-- AdMob uygulama kimliği. Bu anahtar olmadan reklam SDK'sı açılışta
+	     uygulamayı çökertir (GADInvalidInitializationException).
+	     Şu anki değer Google'ın TEST kimliğidir; gelir elde etmek için
+	     AdMob konsolundaki gerçek kimlikle değiştirin. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Fatura ve garanti belgelerinizin fotoğrafını çekebilmek için kamera erişimi gerekiyor. Fotoğraflar yalnızca telefonunuzda saklanır.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fatura ve garanti belgelerinizin fotoğraflarını ekleyebilmek için galeri erişimi gerekiyor. Fotoğraflar yalnızca telefonunuzda saklanır.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+</dict>
 </plist>
