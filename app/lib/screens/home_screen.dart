@@ -302,9 +302,11 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-/// Tekrar eden ödemelerin haftalık / aylık / yıllık toplamı.
+/// Düzenli ödemelerin özeti.
 ///
-/// Liste sonunda durur: ana iş hatırlatmaları görmek, özet ikincil bilgidir.
+/// İki bölüm gösterir: aynı sıklıktaki ödemelerin kendi içindeki toplamı
+/// (kullanıcının kafasındaki gerçek rakam) ve hepsinin tek ölçüye indirilmiş
+/// hâli ("toplamda ayda ne kadar gidiyor?").
 class _TotalsCard extends StatelessWidget {
   const _TotalsCard({required this.reminders});
 
@@ -350,9 +352,44 @@ class _TotalsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+
+          const SizedBox(height: 12),
+          for (final entry in totals.byInterval.entries)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.key.label,
+                      style: const TextStyle(fontSize: 14.5),
+                    ),
+                  ),
+                  Text(
+                    money.format(entry.value),
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          Divider(height: 24, color: scheme.outlineVariant),
+
+          Text(
+            'Hepsi birlikte',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
+              _TotalColumn(label: 'Günlük', value: money.format(totals.daily)),
               _TotalColumn(
                 label: 'Haftalık',
                 value: money.format(totals.weekly),
@@ -388,7 +425,7 @@ class _TotalColumn extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 4),
           FittedBox(
@@ -396,7 +433,7 @@ class _TotalColumn extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
             ),
           ),
         ],

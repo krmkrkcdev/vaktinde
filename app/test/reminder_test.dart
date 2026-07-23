@@ -342,27 +342,52 @@ void _paymentTotalsTests() {
   );
 
   group('PaymentTotals', () {
-    test('aylık ödeme yıllık karşılığına çevrilir', () {
-      final totals = PaymentTotals.from([payment(700, RepeatInterval.monthly)]);
-      expect(totals.yearly, 8400);
-      expect(totals.monthly, closeTo(700, 0.01));
-      expect(totals.countedReminders, 1);
+    test('aynı sıklıktaki ödemeler kendi içinde toplanır', () {
+      // Kullanıcının kafasındaki rakam bu: "ayda 3 ödemem var, toplamı 600".
+      final totals = PaymentTotals.from([
+        payment(100, RepeatInterval.monthly),
+        payment(200, RepeatInterval.monthly),
+        payment(300, RepeatInterval.monthly),
+        payment(10, RepeatInterval.daily),
+        payment(20, RepeatInterval.daily),
+        payment(1200, RepeatInterval.yearly),
+      ]);
+
+      expect(totals.byInterval[RepeatInterval.monthly], 600);
+      expect(totals.byInterval[RepeatInterval.daily], 30);
+      expect(totals.byInterval[RepeatInterval.yearly], 1200);
+      expect(totals.countedReminders, 6);
     });
 
-    test('farklı aralıklar ortak ölçekte toplanır', () {
-      // Aylık 100 (yılda 1200) + yıllık 1200 = 2400
+    test('gruplar sıktan seyreğe sıralanır', () {
+      final totals = PaymentTotals.from([
+        payment(1200, RepeatInterval.yearly),
+        payment(10, RepeatInterval.daily),
+        payment(100, RepeatInterval.monthly),
+      ]);
+      expect(totals.byInterval.keys.toList(), [
+        RepeatInterval.daily,
+        RepeatInterval.monthly,
+        RepeatInterval.yearly,
+      ]);
+    });
+
+    test('normalize toplam farklı sıklıkları tek ölçüye indirir', () {
+      // Aylık 100 (yılda 1200) + yıllık 1200 = yılda 2400
       final totals = PaymentTotals.from([
         payment(100, RepeatInterval.monthly),
         payment(1200, RepeatInterval.yearly),
       ]);
       expect(totals.yearly, 2400);
       expect(totals.monthly, closeTo(200, 0.01));
+      expect(totals.weekly, closeTo(2400 / 52, 0.01));
+      expect(totals.daily, closeTo(2400 / 365, 0.01));
     });
 
     test('tek seferlik kayıtlar düzenli gidere sayılmaz', () {
       final totals = PaymentTotals.from([payment(500, RepeatInterval.none)]);
       expect(totals.isEmpty, isTrue);
-      expect(totals.yearly, 0);
+      expect(totals.byInterval, isEmpty);
     });
 
     test('saat başı tekrar toplama dahil edilmez', () {

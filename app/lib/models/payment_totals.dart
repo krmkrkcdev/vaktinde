@@ -1,33 +1,45 @@
 import 'reminder.dart';
 import 'repeat_interval.dart';
 
-/// Tekrar eden ödemelerin haftalık / aylık / yıllık karşılıkları.
+/// Düzenli ödemelerin iki ayrı görünümü.
 ///
-/// Farklı aralıklardaki tutarlar doğrudan toplanamaz: "her ay 700" ile
-/// "her yıl 3.000" aynı ölçekte değildir. Her tutar önce **yıllık** karşılığına
-/// çevrilir, sonra istenen döneme bölünür.
+/// **Kendi aralığında toplam** ([byInterval]): aynı sıklıktaki ödemeler
+/// birbiriyle toplanır. "Her ay 3 ödemem var, toplamı 600" bilgisi budur ve
+/// kullanıcının kafasındaki gerçek rakamdır.
 ///
-/// Tekrar etmeyen (tek seferlik) kayıtlar hesaba katılmaz — bunlar düzenli bir
-/// gider değildir ve aylık ortalamayı yanıltır.
+/// **Normalize toplam** ([daily], [weekly], [monthly], [yearly]): farklı
+/// sıklıktaki ödemelerin tek ölçüye indirilmiş hâli. "Toplamda ayda ne kadar
+/// gidiyor?" sorusunun cevabıdır; her tutar önce yıllık karşılığına çevrilip
+/// istenen döneme bölünür.
+///
+/// Tekrar etmeyen (tek seferlik) kayıtlar hiçbirine katılmaz — düzenli bir
+/// gider değildir ve ortalamayı yanıltır.
 class PaymentTotals {
   const PaymentTotals({
+    required this.byInterval,
+    required this.daily,
     required this.weekly,
     required this.monthly,
     required this.yearly,
     required this.countedReminders,
   });
 
+  /// Sıklığına göre gruplanmış toplamlar. Yalnızca ödemesi olan aralıklar
+  /// bulunur; sıralama [RepeatInterval] tanım sırasını (sıktan seyreğe) izler.
+  final Map<RepeatInterval, double> byInterval;
+
+  final double daily;
   final double weekly;
   final double monthly;
   final double yearly;
 
-  /// Toplama dahil edilen hatırlatma sayısı. Sıfırsa gösterilecek bir şey
-  /// yoktur (ne tutarı olan ne de tekrar eden kayıt var).
+  /// Toplama dahil edilen hatırlatma sayısı.
   final int countedReminders;
 
   bool get isEmpty => countedReminders == 0;
 
   factory PaymentTotals.from(Iterable<Reminder> reminders) {
+    final grouped = <RepeatInterval, double>{};
     var yearlyTotal = 0.0;
     var counted = 0;
 
@@ -38,11 +50,24 @@ class PaymentTotals {
       final perYear = _occurrencesPerYear(reminder.repeat);
       if (perYear == null) continue;
 
+      grouped.update(
+        reminder.repeat,
+        (existing) => existing + amount,
+        ifAbsent: () => amount,
+      );
       yearlyTotal += amount * perYear;
       counted++;
     }
 
+    // Enum tanım sırasına göre sırala: sık olandan seyrek olana.
+    final ordered = <RepeatInterval, double>{
+      for (final interval in RepeatInterval.values)
+        if (grouped.containsKey(interval)) interval: grouped[interval]!,
+    };
+
     return PaymentTotals(
+      byInterval: ordered,
+      daily: yearlyTotal / 365,
       weekly: yearlyTotal / 52,
       monthly: yearlyTotal / 12,
       yearly: yearlyTotal,
@@ -54,7 +79,7 @@ class PaymentTotals {
   ///
   /// Tek seferlik kayıtlar ve saat başı tekrar `null` döner: ilki düzenli bir
   /// gider değildir, ikincisi ise ödeme değil hatırlatma amaçlıdır (ilaç gibi)
-  /// ve yıllık 8.760 kez sayılması toplamı anlamsız kılar.
+  /// ve yılda 8.760 kez sayılması toplamı anlamsız kılar.
   static double? _occurrencesPerYear(RepeatInterval repeat) {
     switch (repeat) {
       case RepeatInterval.none:
