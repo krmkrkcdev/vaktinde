@@ -25,7 +25,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vaktinde'),
+        title: const Text('Vakitlice'),
         actions: [
           IconButton(
             tooltip: 'Ayarlar',

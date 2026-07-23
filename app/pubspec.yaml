@@ -5,7 +5,7 @@ publish_to: 'none'
 # Biçim: <sürüm adı>+<build numarası>
 # Build numarası deploy.sh tarafından her yayında otomatik artırılır ve hem
 # iOS (CURRENT_PROJECT_VERSION) hem Android (versionCode) için tek kaynaktır.
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: ^3.10.4
