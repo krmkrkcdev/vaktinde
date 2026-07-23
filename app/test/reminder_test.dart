@@ -57,6 +57,35 @@ void main() {
       );
     });
 
+    test('saat başı tekrar bir saat ileri taşır', () {
+      expect(
+        RepeatInterval.hourly.next(DateTime(2026, 3, 3, 23, 30)),
+        DateTime(2026, 3, 4, 0, 30),
+      );
+    });
+
+    test('günlük tekrar bildirim saatini korur', () {
+      expect(
+        RepeatInterval.daily.next(DateTime(2026, 12, 31, 9, 15)),
+        DateTime(2027, 1, 1, 9, 15),
+      );
+    });
+
+    test('haftalık tekrar yedi gün ekler', () {
+      expect(
+        RepeatInterval.weekly.next(DateTime(2026, 2, 25, 8, 0)),
+        DateTime(2026, 3, 4, 8, 0),
+      );
+    });
+
+    test('altı aylık tekrar yarım yıl ileri taşır', () {
+      expect(
+        RepeatInterval.semiannual.next(DateTime(2026, 8, 31)),
+        // 31 Ağustos + 6 ay = 28 Şubat: ay sonu kırpılır.
+        DateTime(2027, 2, 28),
+      );
+    });
+
     test('tekrar yoksa tarih değişmez', () {
       final date = DateTime(2026, 3, 3);
       expect(RepeatInterval.none.next(date), date);

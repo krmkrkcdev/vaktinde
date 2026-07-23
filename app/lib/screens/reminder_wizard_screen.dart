@@ -42,6 +42,12 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
   DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
   Set<int> _leadDays = {};
   List<String> _photoNames = [];
+
+  /// Bildirim saati. null ise kullanıcı dokunmamıştır ve ayarlardaki
+  /// varsayılan saat kullanılır — sihirbazı bir adım daha uzatmamak için
+  /// saat seçimi bilinçli olarak isteğe bağlıdır.
+  TimeOfDay? _notifyTime;
+
   bool _saving = false;
 
   @override
@@ -121,8 +127,9 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
           : _noteController.text.trim(),
       dueDate: DateTime(dueDate.year, dueDate.month, dueDate.day),
       leadDays: leads,
-      notifyHour: settings.defaultNotifyTime.hour,
-      notifyMinute: settings.defaultNotifyTime.minute,
+      // Saat seçilmediyse ayarlardaki varsayılan geçerli olur.
+      notifyHour: (_notifyTime ?? settings.defaultNotifyTime).hour,
+      notifyMinute: (_notifyTime ?? settings.defaultNotifyTime).minute,
       repeat: _repeat ?? RepeatInterval.none,
       amount: _parseAmount(_amountController.text),
       photoPaths: _photoNames,
@@ -374,9 +381,13 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
         const SizedBox(height: 20),
         for (final option in RepeatInterval.values) ...[
           _BigTile(
-            icon: option == RepeatInterval.none
-                ? Icons.looks_one_outlined
-                : Icons.repeat,
+            icon: switch (option) {
+              RepeatInterval.none => Icons.looks_one_outlined,
+              RepeatInterval.hourly => Icons.hourglass_bottom_outlined,
+              RepeatInterval.daily => Icons.today_outlined,
+              RepeatInterval.weekly => Icons.date_range_outlined,
+              _ => Icons.repeat,
+            },
             iconColor: Theme.of(context).colorScheme.primary,
             label: option == RepeatInterval.none
                 ? 'Sadece bir kez'
@@ -393,6 +404,9 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
   // --------------------------------------------------------------- adım 5
 
   Widget _leadStep() {
+    final defaultTime = context.watch<SettingsStore>().defaultNotifyTime;
+    final effectiveTime = _notifyTime ?? defaultTime;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -416,8 +430,35 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
           ),
           const SizedBox(height: 10),
         ],
+        const SizedBox(height: 22),
+        _FieldLabel('Saat kaçta?', icon: Icons.schedule_outlined),
+        _Hint(
+          _notifyTime == null
+              ? 'Ayarlardaki varsayılan saat kullanılacak. Değiştirmek için '
+                    'dokunun.'
+              : 'Bu hatırlatma için özel saat seçildi.',
+        ),
+        const SizedBox(height: 12),
+        _BigTile(
+          icon: Icons.access_time,
+          iconColor: Theme.of(context).colorScheme.primary,
+          label: effectiveTime.format(context),
+          selected: _notifyTime != null,
+          onTap: _pickNotifyTime,
+        ),
       ],
     );
+  }
+
+  Future<void> _pickNotifyTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _notifyTime ?? context.read<SettingsStore>().defaultNotifyTime,
+      helpText: 'Bildirim saati',
+      cancelText: 'Vazgeç',
+      confirmText: 'Seç',
+    );
+    if (picked != null) setState(() => _notifyTime = picked);
   }
 
   // --------------------------------------------------------------- adım 6
@@ -475,6 +516,8 @@ class _ReminderWizardScreenState extends State<ReminderWizardScreen> {
           dueDate: _dueDate,
           repeat: _repeat ?? RepeatInterval.none,
           leadDays: _leadDays.toList()..sort((a, b) => b.compareTo(a)),
+          notifyTime:
+              _notifyTime ?? context.watch<SettingsStore>().defaultNotifyTime,
         ),
       ],
     );
@@ -665,6 +708,7 @@ class _Summary extends StatelessWidget {
     required this.dueDate,
     required this.repeat,
     required this.leadDays,
+    required this.notifyTime,
   });
 
   final ReminderCategory category;
@@ -672,6 +716,7 @@ class _Summary extends StatelessWidget {
   final DateTime dueDate;
   final RepeatInterval repeat;
   final List<int> leadDays;
+  final TimeOfDay notifyTime;
 
   @override
   Widget build(BuildContext context) {
@@ -714,6 +759,7 @@ class _Summary extends StatelessWidget {
             value: repeat == RepeatInterval.none ? 'Sadece bir kez' : repeat.label,
           ),
           _SummaryRow(label: 'Bildirim', value: leadText),
+          _SummaryRow(label: 'Saat', value: notifyTime.format(context)),
         ],
       ),
     );

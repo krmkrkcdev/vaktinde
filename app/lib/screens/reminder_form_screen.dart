@@ -338,18 +338,27 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
             ),
 
             const _SectionLabel('Tekrar'),
-            SegmentedButton<RepeatInterval>(
-              segments: [
-                for (final r in RepeatInterval.values)
-                  ButtonSegment(value: r, label: Text(r.label)),
-              ],
-              selected: {_repeat},
-              onSelectionChanged: (selection) =>
-                  setState(() => _repeat = selection.first),
-              showSelectedIcon: false,
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
+            // SegmentedButton kullanılmıyor: seçenekler yan yana sığmıyor ve
+            // etiketler kırpılıyordu. Açılır liste hem taşmaz hem seçenek
+            // sayısı arttıkça büyümez.
+            DropdownButtonFormField<RepeatInterval>(
+              initialValue: _repeat,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.repeat),
               ),
+              items: [
+                for (final r in RepeatInterval.values)
+                  DropdownMenuItem(
+                    value: r,
+                    child: Text(
+                      r == RepeatInterval.none ? 'Sadece bir kez' : r.label,
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _repeat = value);
+              },
             ),
 
             const _SectionLabel('Tutar (isteğe bağlı)'),
