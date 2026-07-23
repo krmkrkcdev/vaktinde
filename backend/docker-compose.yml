@@ -17,6 +17,9 @@ services:
 
   api:
     build: .
+    # Ters vekil bu adla baglanir; klasor adindan turetilen varsayilan
+    # (backend-api-1) baska projelerle karisir.
+    container_name: vaktinde-api
     restart: unless-stopped
     depends_on:
       db:
@@ -30,11 +33,25 @@ services:
       MAX_PHOTOS_PER_USER: ${MAX_PHOTOS_PER_USER:-500}
     volumes:
       - photos:/data/photos
-    # Yalnizca localhost'a baglanir; disaridan erisim nginx uzerinden olur.
+    # Yalnizca localhost'a baglanir; disaridan erisim ters vekil uzerinden
+    # olur. Bu yayin yerel dogrulama icindir (curl 127.0.0.1:8000/health).
     # Sunucuda 8000 baska bir servis tarafindan kullaniliyorsa .env icinde
-    # API_PORT degistirilir; nginx yapilandirmasindaki port da guncellenmeli.
+    # API_PORT degistirilir.
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
+    networks:
+      # default: veritabanina erisim. proxy: ters vekilin bu servisi
+      # gorebilmesi icin. Veritabani bilincli olarak proxy aginda DEGIL.
+      - default
+      - proxy
+
+networks:
+  proxy:
+    # Ters vekil ile ortak ag. Sunucuda zaten var oldugu icin compose
+    # olusturmaz, mevcut olana baglanir. Ad, PROXY_NETWORK ile degistirilebilir
+    # (bu sunucuda: proxy-network).
+    external: true
+    name: ${PROXY_NETWORK:-proxy-network}
 
 volumes:
   pgdata:

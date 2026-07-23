@@ -26,7 +26,37 @@ yapılandırmasındaki `proxy_pass` portu da güncellenmeli).
 
 Etkileşimli API dökümanı: `http://127.0.0.1:8000/docs`
 
-## nginx ile yayına alma
+## Yayına alma
+
+Sunucuda ters vekilin nasıl kurulu olduğuna göre iki yoldan biri izlenir.
+
+### A) Nginx Proxy Manager (konteyner tabanlı, web arayüzlü)
+
+Bu durumda `.conf` dosyası yazılmaz, `certbot` çalıştırılmaz — sertifikayı
+NPM kendisi alır. Yalnızca API'nin vekil ile aynı ağda olması gerekir;
+`docker-compose.yml` bunu `proxy` ağıyla zaten sağlar. Ağın adı farklıysa
+`.env` içinde `PROXY_NETWORK` ile değiştirilir.
+
+Ardından NPM arayüzünde (`http://SUNUCU:81`) bir Proxy Host eklenir:
+
+| Alan | Değer |
+|---|---|
+| Domain Names | `vaktinde.devposs.com` |
+| Forward Hostname | `vaktinde-api` |
+| Forward Port | `8000` |
+| Websockets Support | kapalı |
+| SSL | Request a new SSL Certificate + Force SSL |
+
+**Advanced** sekmesine şunu eklemek gerekir; yoksa fotoğraf yüklemeleri
+varsayılan 1 MB sınırına takılıp 413 döner:
+
+```
+client_max_body_size 12M;
+proxy_read_timeout 120s;
+proxy_send_timeout 120s;
+```
+
+### B) Sistem nginx'i
 
 `nginx/vaktinde.devposs.com.conf` hazır bir yapılandırma içerir:
 
