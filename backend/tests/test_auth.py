@@ -124,3 +124,86 @@ def test_sifre_degisince_eski_tokenlar_gecersizlesir(auth_client):
         ).status_code
         == 401
     )
+
+
+def _register(client) -> tuple[str, str]:
+    """Yeni hesap açar; (e-posta, access token) döndürür."""
+    email = _email()
+    r = client.post(
+        "/auth/register", json={"email": email, "password": "Sifre12345"}
+    )
+    return email, r.json()["access_token"]
+
+
+def test_hesap_silinince_giris_yapilamaz(client):
+    email, token = _register(client)
+
+    r = client.request(
+        "DELETE",
+        "/auth/me",
+        json={"password": "Sifre12345"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 204
+
+    # Aynı bilgilerle artık giriş yapılamamalı.
+    r = client.post("/auth/login", json={"email": email, "password": "Sifre12345"})
+    assert r.status_code == 401
+
+
+def test_hesap_silme_yanlis_sifreyle_reddedilir(client):
+    _, token = _register(client)
+
+    r = client.request(
+        "DELETE",
+        "/auth/me",
+        json={"password": "YanlisSifre1"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 401
+
+    # Hesap durmalı: token hâlâ geçerli.
+    r = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+
+
+def test_hesap_silinince_hatirlatmalari_da_gider(client):
+    _, token = _register(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    client.post(
+        "/sync/push",
+        headers=headers,
+        json={
+            "reminders": [
+                {
+                    "id": str(uuid.uuid4()),
+                    "category_id": "bill",
+                    "title": "Elektrik",
+                    "due_date": "2026-09-01T00:00:00Z",
+                    "lead_days": "1",
+                    "notify_hour": 9,
+                    "notify_minute": 0,
+                    "repeat_interval": "monthly",
+                    "is_archived": False,
+                    "amount": 100.0,
+                    "created_at": "2026-07-01T00:00:00Z",
+                    "is_deleted": False,
+                    "client_updated_at": "2026-07-01T00:00:00Z",
+                }
+            ]
+        },
+    )
+
+    r = client.request(
+        "DELETE", "/auth/me", json={"password": "Sifre12345"}, headers=headers
+    )
+    assert r.status_code == 204
+
+    # Silinen hesabın tokeni artık hiçbir kaynağa erişememeli.
+    assert client.get("/sync/changes?since=0", headers=headers).status_code == 401
+
+
+def test_token_olmadan_hesap_silinemez(client):
+    r = client.request("DELETE", "/auth/me", json={"password": "Sifre12345"})
+    assert r.status_code == 401

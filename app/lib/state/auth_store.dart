@@ -83,6 +83,23 @@ class AuthStore extends ChangeNotifier {
     }
   }
 
+  /// Hesabı sunucudan siler ve yerel oturumu kapatır.
+  ///
+  /// Cihazdaki hatırlatmalar bu işlemle silinmez; kullanıcı yalnızca bulut
+  /// hesabından çıkmış olur. Yerel verileri silmek ayrı bir seçenektir
+  /// (Ayarlar → Tüm verileri sil).
+  Future<void> deleteAccount(String password) async {
+    _busy = true;
+    notifyListeners();
+    try {
+      await api.deleteAccount(password);
+      await signOut();
+    } finally {
+      _busy = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> signOut() async {
     api.clear();
     _email = null;

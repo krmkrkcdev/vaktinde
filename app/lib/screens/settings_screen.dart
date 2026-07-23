@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:intl/intl.dart';
 
+import '../services/api_client.dart';
 import '../services/notification_service.dart';
 import '../services/sync_service.dart';
 import '../state/auth_store.dart';
@@ -286,8 +287,84 @@ class _AccountSection extends StatelessWidget {
           subtitle: const Text('Kayıtlarınız bu telefonda kalır'),
           onTap: () => _confirmSignOut(context),
         ),
+        ListTile(
+          leading: Icon(Icons.person_remove_outlined, color: scheme.error),
+          title: Text('Hesabımı sil', style: TextStyle(color: scheme.error)),
+          subtitle: const Text(
+            'Buluttaki tüm verileriniz kalıcı olarak silinir',
+          ),
+          onTap: () => _confirmDeleteAccount(context),
+        ),
       ],
     );
+  }
+
+  /// Hesap silme akışı: önce ne olacağını anlatır, sonra şifre ister.
+  ///
+  /// İki aşamalı olmasının sebebi işlemin geri alınamaz olması; tek dokunuşla
+  /// yanlışlıkla tetiklenmemeli.
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hesabınız silinsin mi?'),
+        content: const Text(
+          'Buluttaki hatırlatmalarınız ve belge fotoğraflarınız kalıcı olarak '
+          'silinecek. Bu işlem geri alınamaz.\n\n'
+          'Bu telefondaki kayıtlarınız silinmez; onları da kaldırmak için '
+          '"Tüm verileri sil" seçeneğini kullanın.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            child: const Text('Devam et'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final password = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => const _PasswordPrompt(),
+    );
+    if (password == null || password.isEmpty || !context.mounted) return;
+
+    final auth = context.read<AuthStore>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    try {
+      await auth.deleteAccount(password);
+      navigator.pop();
+      messenger.showSnackBar(
+        const SnackBar(
+          duration: kSnackDuration,
+          content: Text('Hesabınız silindi.'),
+        ),
+      );
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(duration: kSnackDuration, content: Text(e.message)),
+      );
+    } on NetworkUnavailableException {
+      messenger.showSnackBar(
+        const SnackBar(
+          duration: kSnackDuration,
+          content: Text(
+            'Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edin.',
+          ),
+        ),
+      );
+    }
   }
 
   static String _statusText(SyncController sync) {
@@ -346,5 +423,62 @@ class _AccountSection extends StatelessWidget {
 
     if (confirmed != true || !context.mounted) return;
     await context.read<AuthStore>().signOut();
+  }
+}
+
+/// Hesap silmeden önce şifreyi bir kez daha ister.
+class _PasswordPrompt extends StatefulWidget {
+  const _PasswordPrompt();
+
+  @override
+  State<_PasswordPrompt> createState() => _PasswordPromptState();
+}
+
+class _PasswordPromptState extends State<_PasswordPrompt> {
+  final _controller = TextEditingController();
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Şifrenizi girin'),
+      content: TextField(
+        controller: _controller,
+        obscureText: _obscure,
+        autofocus: true,
+        decoration: InputDecoration(
+          labelText: 'Şifre',
+          suffixIcon: IconButton(
+            tooltip: _obscure ? 'Şifreyi göster' : 'Şifreyi gizle',
+            icon: Icon(
+              _obscure
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined,
+            ),
+            onPressed: () => setState(() => _obscure = !_obscure),
+          ),
+        ),
+        onSubmitted: (value) => Navigator.of(context).pop(value),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Vazgeç'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+          child: const Text('Hesabımı sil'),
+        ),
+      ],
+    );
   }
 }

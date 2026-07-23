@@ -155,6 +155,20 @@ class ApiClient {
     return response.bodyBytes;
   }
 
+  /// Hesabı ve sunucudaki tüm verileri kalıcı olarak siler.
+  ///
+  /// Şifre yeniden istenir: işlem geri alınamaz olduğu için sunucu, oturum
+  /// açık olsa bile kimliği bir kez daha doğrular.
+  Future<void> deleteAccount(String password) async {
+    await _send(
+      (h) => _http.delete(
+        _uri('/auth/me'),
+        headers: h,
+        body: jsonEncode({'password': password}),
+      ),
+    );
+  }
+
   Future<void> deletePhoto(String photoId) async {
     await _send((h) => _http.delete(_uri('/photos/$photoId'), headers: h));
   }

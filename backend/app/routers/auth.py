@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta, timezone
 
+import logging
+import shutil
+
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -12,6 +15,7 @@ from ..deps import current_user
 from ..models import LoginAttempt, User
 from ..schemas import (
     ChangePasswordRequest,
+    DeleteAccountRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
@@ -22,6 +26,7 @@ from ..security import create_token, decode_token, hash_password, verify_passwor
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
+logger = logging.getLogger("vaktinde")
 
 
 def _tokens(user: User) -> TokenResponse:
@@ -120,6 +125,37 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> TokenRespons
 @router.get("/me", response_model=UserResponse)
 def me(user: User = Depends(current_user)) -> User:
     return user
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(
+    body: DeleteAccountRequest,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Hesabı ve tüm verilerini kalıcı olarak siler.
+
+    App Store, hesap oluşturmaya izin veren uygulamaların hesap silmeyi de
+    uygulama içinden sunmasını zorunlu tutuyor (Review Guideline 5.1.1).
+
+    Hatırlatmalar ve fotoğraf kayıtları veritabanında ON DELETE CASCADE ile
+    gider; fotoğraf DOSYALARI veritabanının dışında olduğu için ayrıca
+    silinir. Dosyalar önce silinir: satır kalıp dosya kalmasındansa, silme
+    yarıda kesilirse sahipsiz dosya kalmaması tercih edilir.
+    """
+    if not verify_password(body.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Şifre doğrulanamadı",
+        )
+
+    shutil.rmtree(settings.photo_dir / str(user.id), ignore_errors=True)
+
+    db.delete(user)
+    db.commit()
+
+    logger.info("Hesap silindi: %s", user.id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/change-password", response_model=TokenResponse)

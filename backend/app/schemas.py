@@ -47,6 +47,12 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(min_length=8, max_length=200)
 
 
+class DeleteAccountRequest(BaseModel):
+    """Hesap silme geri alınamaz olduğu için şifre yeniden doğrulanır."""
+
+    password: str
+
+
 # --------------------------------------------------------------------- sync
 
 
