@@ -15,9 +15,9 @@ logger = logging.getLogger("vaktinde")
 settings = get_settings()
 
 # Açılışta bir kez okunur: her istekte diske gitmenin anlamı yok.
-_PRIVACY_HTML = (Path(__file__).parent / "static" / "gizlilik.html").read_text(
-    encoding="utf-8"
-)
+_STATIC = Path(__file__).parent / "static"
+_PRIVACY_HTML = (_STATIC / "gizlilik.html").read_text(encoding="utf-8")
+_SUPPORT_HTML = (_STATIC / "destek.html").read_text(encoding="utf-8")
 
 
 @asynccontextmanager
@@ -64,6 +64,12 @@ def privacy_policy() -> HTMLResponse:
     yerine doğrudan dosyadan okunuyor.
     """
     return HTMLResponse(_PRIVACY_HTML)
+
+
+@app.get("/destek", response_class=HTMLResponse, tags=["system"])
+def support() -> HTMLResponse:
+    """Destek sayfası. App Store zorunlu bir destek URL'i istiyor."""
+    return HTMLResponse(_SUPPORT_HTML)
 
 
 @app.get("/health", tags=["system"])

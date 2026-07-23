@@ -122,7 +122,7 @@ Gizlilik politikası: https://vaktinde.devposs.com/gizlilik
 ## Sürüm notları — 1.0.0 (What's New)
 
 ```
-Vakit-Nakit'nin ilk sürümü.
+Vakit-Nakit'in ilk sürümü.
 
 • Kira, fatura, aidat, sigorta, muayene ve abonelik takibi
 • Kaç gün önceden ve saat kaçta hatırlatılacağını siz seçersiniz
@@ -141,14 +141,9 @@ Vakit-Nakit'nin ilk sürümü.
 | Birincil kategori | Finans |
 | İkincil kategori | Yaşam Tarzı *(isteğe bağlı)* |
 | Gizlilik politikası URL | `https://vaktinde.devposs.com/gizlilik` |
-| Destek URL | ⚠️ gerekli — aşağıya bakın |
+| Destek URL | `https://vaktinde.devposs.com/destek` |
 | Pazarlama URL | isteğe bağlı, boş bırakılabilir |
 | Telif hakkı | `2026 Kerem Karakoç` |
-
-### Destek URL'i
-
-App Store zorunlu tutuyor. Ayrı bir sayfa hazırlanabilir ya da geçici olarak
-gizlilik politikası adresi verilebilir; iletişim e-postası orada yer alıyor.
 
 ### Yaş derecelendirmesi
 
