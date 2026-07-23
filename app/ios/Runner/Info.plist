@@ -41,6 +41,13 @@
 			<string>UIInterfaceOrientationPortrait</string>
 			<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		</array>
+		<!-- iPad'de çoklu görev (Split View / Slide Over) kapalı. Çoklu görevi
+		     destekleyen uygulamalar dört yönü de beyan etmek zorundadır; bu
+		     uygulama yalnızca dikey düzen için tasarlandığı ve yatay düzeni
+		     olmadığı için tam ekran çalışır. Bu anahtar olmadan App Store
+		     Connect yüklemeyi 90474 hatasıyla reddeder. -->
+		<key>UIRequiresFullScreen</key>
+		<true/>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>

@@ -16,6 +16,8 @@ key.properties
 **/fastlane/metadata/
 *.ipa
 *.dSYM.zip
+# sigh/match imzalama sırasında indirir; makineye özeldir ve yenilenebilir.
+*.mobileprovision
 
 # Derleme çıktıları
 build/
